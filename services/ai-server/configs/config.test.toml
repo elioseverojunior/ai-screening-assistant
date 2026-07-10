@@ -1,0 +1,6 @@
+# Test configuration — loaded automatically when AI_SERVER_ENVIROMENT=test
+
+provider = "ollama"
+
+ollama_base_url = "http://localhost:11434"
+default_model = "llama3.2-vision"

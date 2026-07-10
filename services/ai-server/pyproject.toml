@@ -1,0 +1,46 @@
+[project]
+name = "ai-server"
+version = "0.1.0"
+description = "AI inference server for Screening LLM Assistant"
+requires-python = ">=3.14"
+dependencies = [
+    "boto3>=1.35.0",
+    "botocore>=1.35.0",
+    "fastapi>=0.115.0",
+    "httpx>=0.28.0",
+    "httpx2>=2.5.0",
+    "opentelemetry-api>=1.30.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.30.0",
+    "opentelemetry-instrumentation-fastapi>=0.64b0",
+    "opentelemetry-instrumentation-httpx>=0.64b0",
+    "opentelemetry-instrumentation-logging>=0.64b0",
+    "opentelemetry-sdk>=1.30.0",
+    "pillow>=11.0.0",
+    "prometheus-client>=0.21.0",
+    "pydantic-settings>=2.7.0",
+    "python-dotenv>=1.1.0",
+    "python-multipart>=0.0.18",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "syrupy>=4.0.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=ai_server --cov-report=term --cov-report=term-missing"
+markers = [
+    "e2e: End-to-end tests that start a real server process.",
+]
+
+[tool.coverage.run]
+source = ["ai_server"]

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "general",
+  "instructions": ["CLAUDE.md"],
+  "references": {
+    "docs": {
+      "path": "docs",
+      "description": "Use for architecture, roadmap, and design decisions"
+    },
+    "xcode-scheme": {
+      "path": "apps/macos-screening-llm-assistant/macos-screening-llm-assistant.xcodeproj/xcshareddata/xcschemes/macos-screening-llm-assistant.xcscheme",
+      "description": "Xcode test scheme configuration with -parallel-testing-enabled NO",
+      "hidden": true
+    }
+  },
+  "command": {
+    "test": {
+      "description": "Run the full macOS test suite (34 tests)",
+      "template": "Run the macOS Xcode test suite:\n\n```bash\nxcodebuild test \\\n  -project apps/macos-screening-llm-assistant/macos-screening-llm-assistant.xcodeproj \\\n  -scheme \"macos-screening-llm-assistant\" \\\n  -destination \"platform=macOS\" \\\n  -configuration Debug \\\n  -parallel-testing-enabled NO\n```"
+    },
+    "build": {
+      "description": "Build the macOS app (no tests)",
+      "template": "Build the macOS app:\n\n```bash\nxcodebuild build \\\n  -project apps/macos-screening-llm-assistant/macos-screening-llm-assistant.xcodeproj \\\n  -scheme \"macos-screening-llm-assistant\" \\\n  -destination \"platform=macOS\" \\\n  -configuration Debug\n```"
+    },
+    "otel": {
+      "description": "Start local observability stack (OTel + Grafana + Prometheus)",
+      "template": "Start the local OpenTelemetry dev stack:\n\n```bash\ndocker compose -f development/docker-compose.yml up -d\n# Grafana: http://localhost:3000 (admin/admin)\n# OTel Collector: localhost:4318\n```"
+    }
+  },
+  "permission": {
+    "bash": {
+      "*": "allow"
+    },
+    "zsh": {
+      "*": "allow"
+    }
+  }
+}

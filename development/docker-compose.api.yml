@@ -1,0 +1,39 @@
+name: screening-llm-assistant
+
+services:
+  ai-server:
+    build:
+      context: ../services/ai-server
+      dockerfile: Dockerfile
+    container_name: screening-ai-server
+    hostname: ai-server 
+    ports:
+      - "8000:8000"
+      - "127.0.0.1:8001:8001"
+    environment:
+      - AI_SERVER_HEALTH_PORT=8001
+      - AI_SERVER_OTEL_COLLECTOR_ENDPOINT=http://otel-collector:4318
+      - AI_SERVER_OTEL_LOG_LEVEL=INFO
+      - AI_SERVER_OTEL_METRICS_PREFIX=screening_llm
+      - AI_SERVER_OLLAMA_BASE_URL=http://ollama:11434
+      - AI_SERVER_METRICS_PORT=9000
+      - AI_SERVER_PROVIDER=zen
+      - AI_SERVER_DEFAULT_MODEL=deepseek-v4-flash-free
+      - AI_SERVER_ZEN_MODEL=deepseek-v4-flash-free
+      - AI_SERVER_ZEN_API_KEY=${AI_SERVER_ZEN_API_KEY:-}
+      - AI_SERVER_ENVIROMENT=development
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8001/health/live', timeout=2).raise_for_status()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on: []
+      # - ollama
+      # - otel-collector
+    networks:
+      - screening-llm-assistant
+
+networks:
+  screening-llm-assistant:
+    driver: bridge

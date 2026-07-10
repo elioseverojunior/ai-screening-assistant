@@ -1,0 +1,29 @@
+name: llm
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: screening-ollama
+    hostname: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_KEEP_ALIVE=24h
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - screening-llm-assistant
+
+volumes:
+  ollama-data:
+
+networks:
+  screening-llm-assistant:
+    driver: bridge
