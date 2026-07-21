@@ -1,0 +1,58 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="WUtUJNEbvnwgKOWbTSCf">
+    <mxGraphModel dx="2054" dy="1219" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-5" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="89.5" y="300" as="sourcePoint" />
+            <mxPoint x="249.5" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-1" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value=":User" vertex="1">
+          <mxGeometry height="300" width="100" x="40" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-6" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;entryX=0.53;entryY=0.6;entryDx=0;entryDy=0;entryPerimeter=0;" target="iV3SAZ3PcidRLy81eMN6-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="249.5" y="340" as="sourcePoint" />
+            <mxPoint x="409.5" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-10" connectable="0" parent="iV3SAZ3PcidRLy81eMN6-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Send to API AI Router" vertex="1">
+          <mxGeometry relative="1" x="0.0438" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-2" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value=":OSX Client" vertex="1">
+          <mxGeometry height="300" width="100" x="200" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-12" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="499.5" y="399" as="sourcePoint" />
+            <mxPoint x="749.5" y="399" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-13" connectable="0" parent="iV3SAZ3PcidRLy81eMN6-12" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Display the Response in the Viewer" vertex="1">
+          <mxGeometry relative="1" x="-0.3" y="2" as="geometry">
+            <mxPoint x="38" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-3" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value=":API AI Router" vertex="1">
+          <mxGeometry height="300" width="100" x="450" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-4" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value=":OSX Viewer" vertex="1">
+          <mxGeometry height="300" width="100" x="700" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-8" edge="1" parent="1" source="iV3SAZ3PcidRLy81eMN6-2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;curved=0;innerLoopWaypoints=1;" target="iV3SAZ3PcidRLy81eMN6-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="iV3SAZ3PcidRLy81eMN6-9" connectable="0" parent="iV3SAZ3PcidRLy81eMN6-8" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Capture the Screen" vertex="1">
+          <mxGeometry relative="1" x="-0.559" y="2" as="geometry">
+            <mxPoint x="35" y="12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

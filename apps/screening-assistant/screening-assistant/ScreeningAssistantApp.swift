@@ -28,18 +28,98 @@ enum SystemShortcutConflict {
 private final class LogStore: ObservableObject {
     static let shared = LogStore()
     @Published private(set) var entries: [String] = []
+    private var minLevel: LogLevel = .info
+    private var lokiURL: String?
+    private var lokiLabels: [String: String] = [:]
 
-    func log(_ message: String, attributes: [String: String] = [:]) {
+    func setLogLevel(_ level: LogLevel) {
+        minLevel = level
+    }
+
+    func setLokiURL(_ url: String, labels: [String: String] = [:]) {
+        lokiURL = url
+        lokiLabels = labels
+    }
+
+    func log(_ message: String, level: LogLevel = .info, attributes: [String: String] = [:]) {
+        guard level.priority >= minLevel.priority else { return }
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm:ss"
         let timestamp = formatter.string(from: Date())
-        entries.append("[\(timestamp)] \(message)")
-        OtelTracer.shared.log(message, attributes: attributes)
+        let prefix = level.rawValue
+        let entry = "[\(timestamp)] [\(prefix)] \(message)"
+        entries.append(entry)
+        
+        // Send to Loki if configured
+        if let lokiURL = lokiURL {
+            sendToLoki(entry, level: level.rawValue, attributes: attributes, lokiURL: lokiURL)
+        }
+        
+        OtelTracer.shared.log(message, severity: level.rawValue, severityNumber: level.severityNumber, attributes: attributes)
+    }
+
+    private func sendToLoki(_ message: String, level: String, attributes: [String: String], lokiURL: String) {
+        let timestamp = Int(Date().timeIntervalSince1970 * 1_000_000_000)
+        var streamLabels = lokiLabels
+        streamLabels["level"] = level
+        streamLabels["app"] = "screening-assistant"
+        for (k, v) in attributes {
+            streamLabels[k] = v
+        }
+        
+        let labelString = streamLabels.map { "\($0.key)=\"\($0.value)\"" }.joined(separator: ",")
+        let logEntry = "{\"streams\": [{\"stream\": {\(labelString)}, \"values\": [[\"\(timestamp)\", \"\(message)\"]]}]}"
+        
+        guard let url = URL(string: lokiURL.hasSuffix("/loki/api/v1/push") ? lokiURL : "\(lokiURL)/loki/api/v1/push"),
+              let data = logEntry.data(using: .utf8) else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = data
+        request.timeoutInterval = 5
+        
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error {
+                print("[Loki] Failed to send log: \(error)")
+            } else if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 204 {
+                print("[Loki] Unexpected status: \(httpResponse.statusCode)")
+            }
+        }.resume()
     }
 
     func clear() {
         entries.removeAll()
     }
+}
+
+extension LogLevel {
+    var priority: Int {
+        switch self {
+        case .debug: return 0
+        case .info:  return 1
+        case .warn:  return 2
+        case .error: return 3
+        }
+    }
+
+    var severityNumber: Int {
+        switch self {
+        case .debug: return 5
+        case .info:  return 9
+        case .warn:  return 13
+        case .error: return 17
+        }
+    }
+}
+
+func modifierFlagsToString(_ flags: NSEvent.ModifierFlags) -> String {
+    var parts: [String] = []
+    if flags.contains(.command) { parts.append("⌘") }
+    if flags.contains(.option) { parts.append("⌥") }
+    if flags.contains(.shift) { parts.append("⇧") }
+    if flags.contains(.control) { parts.append("⌃") }
+    return parts.joined()
 }
 
 @main
@@ -190,6 +270,45 @@ struct ScreeningAssistantApp: App {
 
                 Divider()
 
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Log Level:")
+                        .font(.subheadline).bold()
+                    Picker("", selection: $bindings.logLevel) {
+                        ForEach(LogLevel.allCases, id: \.self) { level in
+                            Text(level.label).tag(level)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: bindings.logLevel) { _, newLevel in
+                        KeyBindingsController.shared.save(bindings)
+                        LogStore.shared.setLogLevel(newLevel)
+                    }
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Loki Push URL:")
+                        .font(.subheadline).bold()
+                    TextField("http://localhost:3100/loki/api/v1/push", text: $bindings.lokiPushURL)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.caption, design: .monospaced))
+                        .onChange(of: bindings.lokiPushURL) { _, newURL in
+                            KeyBindingsController.shared.save(bindings)
+                            if let url = newURL.isEmpty ? nil : URL(string: newURL) {
+                                let labels = bindings.lokiLabels.isEmpty ? ["app": "screening-assistant"] : bindings.lokiLabels
+                                LogStore.shared.setLokiURL(url.absoluteString, labels: labels)
+                            } else {
+                                LogStore.shared.setLokiURL("")
+                            }
+                        }
+                    Text("Leave empty to disable Loki push. Labels use default 'app=screening-assistant'.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Divider()
+
                 Toggle("Show AI analysis results locally", isOn: $showLocalAnalysis)
                     .onChange(of: showLocalAnalysis) { _, newValue in
                         UserDefaults.standard.set(newValue, forKey: "showLocalAnalysis")
@@ -203,7 +322,7 @@ struct ScreeningAssistantApp: App {
                 Button("Kill Agent") { NSApp.terminate(nil) }
             }
             .padding()
-            .frame(width: 400, height: 880)
+            .frame(width: 400, height: 1080)
         }
     }
 
@@ -414,6 +533,9 @@ class MenuBarLifecycleManager: NSObject, ObservableObject, NSWindowDelegate {
         let toggleMods = modifierFlags(bindings.toggleModifiers)
         let captureMods = modifierFlags(bindings.captureModifiers)
         let areaCaptureMods = modifierFlags(bindings.areaCaptureModifiers)
+
+        let modString = modifierFlagsToString(currentModifiers)
+        LogStore.shared.log("[KeyEvent] key=\(keysPressed), mods=\(modString), matching=\(currentModifiers == toggleMods ? "toggle" : currentModifiers == captureMods ? "capture" : currentModifiers == areaCaptureMods ? "area" : "none")", level: .debug, attributes: ["component": "keyboard"])
 
         if currentModifiers == toggleMods, keysPressed == bindings.toggleKey {
             toggleMenuVisibility()

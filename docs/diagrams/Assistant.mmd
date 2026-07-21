@@ -1,0 +1,15 @@
+flowchart TD
+    User[(":User")]
+    OSXClient[(":OSX Client")]
+    APIRouter[(":API AI Router")]
+    OSXViewer[(":OSX Viewer")]
+
+    User --> OSXClient
+    OSXClient -->|"Send to API AI Router"| APIRouter
+    APIRouter -->|"Display the Response in the Viewer"| OSXViewer
+    OSXClient -->|"Capture the Screen"| OSXClient
+
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef system fill:#bbf,stroke:#333,stroke-width:2px;
+    class User actor;
+    class OSXClient,APIRouter,OSXViewer system;

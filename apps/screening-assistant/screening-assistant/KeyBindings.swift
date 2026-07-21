@@ -16,12 +16,24 @@ struct KeyBindings: Codable, Equatable {
     var showSelectionBorder = false
     var flashScreenOnCapture = false
     var showCrosshair = false
+    var logLevel: LogLevel = .info
+    var lokiPushURL: String = ""
+    var lokiLabels: [String: String] = [:]
 
     private static var defaultScreenshotPath: String {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let bundleID = Bundle.main.bundleIdentifier ?? "br.eti.elio.screening-assistant"
         return appSupport.appendingPathComponent("\(bundleID)/screenshots").path
     }
+}
+
+enum LogLevel: String, Codable, CaseIterable {
+    case debug = "DEBUG"
+    case info = "INFO"
+    case warn = "WARN"
+    case error = "ERROR"
+
+    var label: String { rawValue }
 }
 
 enum CaptureMode: String, Codable, CaseIterable {

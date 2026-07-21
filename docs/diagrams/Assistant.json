@@ -1,0 +1,80 @@
+{
+  "version": "30.3.13",
+  "pages": [
+    {
+      "id": "WUtUJNEbvnwgKOWbTSCf",
+      "name": "Page-1",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-5",
+          "type": "edge",
+          "parent": "1"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-1",
+          "type": "node",
+          "parent": "1",
+          "label": ":User"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-6",
+          "type": "edge",
+          "parent": "1",
+          "target": "iV3SAZ3PcidRLy81eMN6-3"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-10",
+          "type": "node",
+          "parent": "iV3SAZ3PcidRLy81eMN6-6",
+          "label": "Send to API AI Router"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-2",
+          "type": "node",
+          "parent": "1",
+          "label": ":OSX Client"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-12",
+          "type": "edge",
+          "parent": "1"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-13",
+          "type": "node",
+          "parent": "iV3SAZ3PcidRLy81eMN6-12",
+          "label": "Display the Response in the Viewer"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-3",
+          "type": "node",
+          "parent": "1",
+          "label": ":API AI Router"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-4",
+          "type": "node",
+          "parent": "1",
+          "label": ":OSX Viewer"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "iV3SAZ3PcidRLy81eMN6-2",
+          "target": "iV3SAZ3PcidRLy81eMN6-2"
+        },
+        {
+          "id": "iV3SAZ3PcidRLy81eMN6-9",
+          "type": "node",
+          "parent": "iV3SAZ3PcidRLy81eMN6-8",
+          "label": "Capture the Screen"
+        }
+      ]
+    }
+  ]
+}

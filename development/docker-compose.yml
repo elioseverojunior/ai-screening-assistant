@@ -22,7 +22,7 @@ services:
     depends_on:
       - otel-collector
     networks:
-      - observability
+      - screening-assistant
 
   ollama:
     image: ollama/ollama:latest
@@ -42,7 +42,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - observability
+      - screening-assistant
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
@@ -60,7 +60,7 @@ services:
       jaeger:
         condition: service_started
     networks:
-      - observability
+      - screening-assistant
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -71,7 +71,7 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     networks:
-      - observability
+      - screening-assistant
 
   loki:
     image: grafana/loki:latest
@@ -85,7 +85,7 @@ services:
     command:
       - "--config.file=/etc/loki/loki-config.yaml"
     networks:
-      - observability
+      - screening-assistant
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -103,7 +103,7 @@ services:
       - /dev/kmsg
     privileged: true
     networks:
-      - observability
+      - screening-assistant
 
   prometheus:
     image: prom/prometheus:latest
@@ -131,7 +131,7 @@ services:
       otel-collector:
         condition: service_started
     networks:
-      - observability
+      - screening-assistant
 
   grafana:
     image: grafana/grafana:latest
@@ -155,7 +155,7 @@ services:
       loki:
         condition: service_started
     networks:
-      - observability
+      - screening-assistant
 
 volumes:
   prometheus-data:
@@ -164,5 +164,5 @@ volumes:
   ollama-data:
 
 networks:
-  observability:
+  screening-assistant:
     driver: bridge
