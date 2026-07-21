@@ -8,7 +8,7 @@ permission:
   bash: ask
 ---
 
-You are the iOS/iPadOS architect for the Screening LLM Assistant.
+You are the iOS/iPadOS architect for the Screening Assistant.
 
 ## Design constraints
 

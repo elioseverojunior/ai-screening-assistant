@@ -1,4 +1,4 @@
-# Application Manifest: Screening LLM Assistant
+# Application Manifest: Screening Assistant
 
 ## System Overview
 

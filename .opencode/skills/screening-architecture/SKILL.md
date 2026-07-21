@@ -1,13 +1,13 @@
 ---
 name: screening-architecture
 description: |
-  Use when making architecture decisions about the Screening LLM Assistant.
+  Use when making architecture decisions about the Screening Assistant.
   Covers the macOS capture node, AI server design, iOS client, data flow
   between components, and Mermaid diagram updates. Use ONLY when the task
   involves cross-component architecture or changes to the data pipeline.
 ---
 
-# Screening LLM Assistant — Architecture Skill
+# Screening Assistant — Architecture Skill
 
 ## Data flow
 

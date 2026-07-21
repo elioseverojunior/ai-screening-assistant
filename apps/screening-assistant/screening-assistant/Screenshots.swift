@@ -6,15 +6,18 @@ import ScreenCaptureKit
 import UIKit
 #endif
 import SwiftUI
+import Combine
 
 enum CaptureError: Error {
     case noDisplay
     case permissionDenied
     case captureFailed(Error)
+    case userCancelled
 }
 
 protocol ScreenCaptureProviding {
     func captureFullScreen() async throws -> PlatformImage
+    func captureArea(_ rect: CGRect) async throws -> PlatformImage
 }
 
 #if os(macOS)
@@ -41,11 +44,219 @@ final class ScreenCaptureService: ScreenCaptureProviding {
         }
         return NSImage(cgImage: cgImage, size: .zero)
     }
+
+    func captureArea(_ rect: CGRect) async throws -> PlatformImage {
+        // Capture full screen first, then crop to the selected area
+        let fullImage = try await captureFullScreen()
+        guard let cgImage = fullImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            throw CaptureError.captureFailed(NSError(domain: "CaptureError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to get CGImage"]))
+        }
+        
+        let screenRect = NSScreen.main?.frame ?? .zero
+        let scale = NSScreen.main?.backingScaleFactor ?? 1.0
+        
+        // Convert screen coordinates to image pixel coordinates
+        // Screen origin is bottom-left, image origin is top-left
+        let imageRect = CGRect(
+            x: rect.origin.x * scale,
+            y: (screenRect.height - rect.origin.y - rect.height) * scale,
+            width: rect.width * scale,
+            height: rect.height * scale
+        )
+        
+        guard let croppedCGImage = cgImage.cropping(to: imageRect) else {
+            throw CaptureError.captureFailed(NSError(domain: "CaptureError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to crop image"]))
+        }
+        
+        let croppedImage = NSImage(cgImage: croppedCGImage, size: NSSize(width: rect.width, height: rect.height))
+        return croppedImage
+    }
 }
 #else
 final class ScreenCaptureService: ScreenCaptureProviding {
     func captureFullScreen() async throws -> PlatformImage {
         return PlatformImage()
+    }
+    
+    func captureArea(_ rect: CGRect) async throws -> PlatformImage {
+        return PlatformImage()
+    }
+}
+#endif
+
+// Area Selection Overlay
+#if os(macOS)
+final class AreaSelectionOverlay: NSWindow {
+    static let shared = AreaSelectionOverlay()
+    
+    private var selectionRect: CGRect = .zero
+    private var startPoint: CGPoint = .zero
+    private var isSelecting = false
+    private var continuation: CheckedContinuation<CGRect, Error>?
+    private let overlayView = SelectionView()
+    
+    private override init(contentRect: CGRect, styleMask style: NSWindow.StyleMask, backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool) {
+        super.init(contentRect: NSScreen.main?.frame ?? .zero, styleMask: [.borderless, .fullSizeContentView], backing: .buffered, defer: false)
+        self.level = .screenSaver + 1
+        self.isOpaque = false
+        self.backgroundColor = .clear
+        self.ignoresMouseEvents = false
+        self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        self.contentView = overlayView
+        overlayView.delegate = self
+    }
+    
+    func selectArea() async throws -> CGRect {
+        return try await withCheckedThrowingContinuation { continuation in
+            self.continuation = continuation
+            self.selectionRect = .zero
+            self.isSelecting = false
+            self.overlayView.needsDisplay = true
+            
+            if let screen = NSScreen.main {
+                self.setFrame(screen.frame, display: true)
+            }
+            self.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+    
+    func cancel() {
+        continuation?.resume(throwing: CaptureError.userCancelled)
+        continuation = nil
+        orderOut(nil)
+    }
+}
+
+protocol SelectionViewDelegate: AnyObject {
+    func selectionDidChange(_ rect: CGRect)
+    func selectionDidComplete(_ rect: CGRect)
+    func selectionWasCancelled()
+}
+
+final class SelectionView: NSView {
+    weak var delegate: SelectionViewDelegate?
+    private var startPoint: CGPoint = .zero
+    private var currentRect: CGRect = .zero
+    private var isSelecting = false
+    
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        setupTrackingArea()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupTrackingArea()
+    }
+    
+    private func setupTrackingArea() {
+        let trackingArea = NSTrackingArea(rect: .zero, options: [.inVisibleRect, .mouseMoved, .activeAlways], owner: self, userInfo: nil)
+        addTrackingArea(trackingArea)
+    }
+    
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach { removeTrackingArea($0) }
+        let trackingArea = NSTrackingArea(rect: bounds, options: [.inVisibleRect, .mouseMoved, .activeAlways], owner: self, userInfo: nil)
+        addTrackingArea(trackingArea)
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        startPoint = point
+        currentRect = CGRect(origin: point, size: .zero)
+        isSelecting = true
+        needsDisplay = true
+    }
+    
+    override func mouseDragged(with event: NSEvent) {
+        guard isSelecting else { return }
+        let point = convert(event.locationInWindow, from: nil)
+        let x = min(startPoint.x, point.x)
+        let y = min(startPoint.y, point.y)
+        let width = abs(point.x - startPoint.x)
+        let height = abs(point.y - startPoint.y)
+        currentRect = CGRect(x: x, y: y, width: width, height: height)
+        needsDisplay = true
+    }
+    
+    override func mouseUp(with event: NSEvent) {
+        guard isSelecting else { return }
+        isSelecting = false
+        if currentRect.width > 10 && currentRect.height > 10 {
+            delegate?.selectionDidComplete(currentRect)
+        } else {
+            delegate?.selectionWasCancelled()
+        }
+    }
+    
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 { // Escape key
+            delegate?.selectionWasCancelled()
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+    
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        
+        // Draw semi-transparent overlay
+        context.setFillColor(NSColor.black.withAlphaComponent(0.3).cgColor)
+        context.fill(bounds)
+        
+        // Clear the selection area
+        if !currentRect.isEmpty && isSelecting {
+            context.clear(currentRect)
+            
+            // Draw selection border
+            context.setStrokeColor(NSColor.systemBlue.cgColor)
+            context.setLineWidth(2)
+            context.stroke(currentRect)
+            
+            // Draw dimension label
+            let dimText = "\(Int(currentRect.width)) x \(Int(currentRect.height))"
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.monospacedSystemFont(ofSize: 14, weight: .medium),
+                .foregroundColor: NSColor.white,
+                .strokeColor: NSColor.black,
+                .strokeWidth: -3
+            ]
+            let textRect = CGRect(x: currentRect.origin.x, y: currentRect.origin.y - 24, width: 120, height: 20)
+            (dimText as NSString).draw(in: textRect, withAttributes: attrs)
+        }
+        
+        // Draw instructions
+        let instructionText = "Drag to select area • Esc to cancel"
+        let instructionAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 16, weight: .medium),
+            .foregroundColor: NSColor.white,
+            .strokeColor: NSColor.black,
+            .strokeWidth: -4
+        ]
+        let instructionRect = CGRect(x: 20, y: bounds.height - 60, width: bounds.width - 40, height: 40)
+        (instructionText as NSString).draw(in: instructionRect, withAttributes: instructionAttrs)
+    }
+}
+
+extension AreaSelectionOverlay: SelectionViewDelegate {
+    func selectionDidChange(_ rect: CGRect) {
+        // Update selection rect for visual feedback
+    }
+    
+    func selectionDidComplete(_ rect: CGRect) {
+        continuation?.resume(returning: rect)
+        continuation = nil
+        orderOut(nil)
+    }
+    
+    func selectionWasCancelled() {
+        continuation?.resume(throwing: CaptureError.userCancelled)
+        continuation = nil
+        orderOut(nil)
     }
 }
 #endif
@@ -66,7 +277,17 @@ final class ScreenCaptureManager {
     }
 
     func captureAndStore() async throws {
-        let image = try await service.captureFullScreen()
+        let bindings = KeyBindingsController.shared.current
+        let image: PlatformImage
+        
+        switch bindings.captureMode {
+        case .fullScreen:
+            image = try await service.captureFullScreen()
+        case .areaSelection:
+            let selectionRect = try await AreaSelectionOverlay.shared.selectArea()
+            image = try await service.captureArea(selectionRect)
+        }
+        
         let screenshot = store.addScreenshot(image)
         if let uploadService {
             do {

@@ -1,4 +1,4 @@
-# Screening LLM Assistant — AI Server Configuration
+# Screening Assistant — AI Server Configuration
 # Environment-specific overrides go in .env (secrets) or env vars.
 
 host = "0.0.0.0"

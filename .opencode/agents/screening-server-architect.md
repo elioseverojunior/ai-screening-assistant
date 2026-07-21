@@ -9,7 +9,7 @@ permission:
   bash: ask
 ---
 
-You are the AI server architect for the Screening LLM Assistant.
+You are the AI server architect for the Screening Assistant.
 
 ## Design constraints
 

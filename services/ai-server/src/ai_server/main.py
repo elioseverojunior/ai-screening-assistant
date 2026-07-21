@@ -24,7 +24,7 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="Screening LLM Assistant — AI Server",
+        title="Screening Assistant — AI Server",
         version="0.1.0",
         description="Receives screen captures from macOS agent and returns AI analysis via free endpoints.",
         routes=app.routes,
@@ -76,7 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
-        title="Screening LLM Assistant — AI Server",
+        title="Screening Assistant — AI Server",
         description="Receives screen captures from macOS agent and returns AI analysis via free endpoints.",
         version="0.1.0",
         docs_url="/docs",

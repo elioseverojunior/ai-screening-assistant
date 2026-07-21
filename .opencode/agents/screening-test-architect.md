@@ -8,7 +8,7 @@ permission:
   bash: allow
 ---
 
-You are the test architect for the Screening LLM Assistant macOS app.
+You are the test architect for the Screening Assistant macOS app.
 
 ## Always remember
 

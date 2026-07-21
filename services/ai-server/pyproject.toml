@@ -1,7 +1,7 @@
 [project]
 name = "ai-server"
 version = "0.1.0"
-description = "AI inference server for Screening LLM Assistant"
+description = "AI inference server for Screening Assistant"
 requires-python = ">=3.14"
 dependencies = [
     "boto3>=1.35.0",

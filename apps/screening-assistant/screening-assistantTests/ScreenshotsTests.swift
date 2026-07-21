@@ -82,6 +82,15 @@ private class MockCaptureService: ScreenCaptureProviding {
         image.unlockFocus()
         return image
     }
+
+    func captureArea(_ rect: CGRect) async throws -> NSImage {
+        let image = NSImage(size: rect.size)
+        image.lockFocus()
+        NSColor.green.set()
+        NSRect(origin: .zero, size: rect.size).fill()
+        image.unlockFocus()
+        return image
+    }
 }
 
 private func makeTestImage() -> NSImage {

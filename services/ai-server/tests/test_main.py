@@ -56,7 +56,7 @@ class TestCreateApp:
         app_instance = _app()
         assert (
             app_instance.title
-            == "Screening LLM Assistant — AI Server"
+            == "Screening Assistant — AI Server"
         )
         assert app_instance.version == "0.1.0"
 
@@ -98,7 +98,7 @@ class TestCreateApp:
         response = client.get("/openapi.json")
         assert response.status_code == 200
         spec = response.json()
-        assert spec["info"]["title"] == "Screening LLM Assistant — AI Server"
+        assert spec["info"]["title"] == "Screening Assistant — AI Server"
         assert "/api/analyze" in spec["paths"]
         assert "/health/live" in spec["paths"]
 

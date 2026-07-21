@@ -1,4 +1,4 @@
-# Screening LLM Assistant — Architecture & Roadmap
+# Screening Assistant — Architecture & Roadmap
 
 ## Overview
 

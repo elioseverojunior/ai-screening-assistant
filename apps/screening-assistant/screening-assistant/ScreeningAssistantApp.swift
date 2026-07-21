@@ -75,6 +75,12 @@ struct ScreeningAssistantApp: App {
                         key: $bindings.captureKey,
                         modifiers: $bindings.captureModifiers
                     )
+
+                    keybindingSection(
+                        label: "Area Selection Capture",
+                        key: $bindings.areaCaptureKey,
+                        modifiers: $bindings.areaCaptureModifiers
+                    )
                 }
                 .font(.subheadline)
 
@@ -151,6 +157,39 @@ struct ScreeningAssistantApp: App {
 
                 Divider()
 
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Capture Mode:")
+                        .font(.subheadline).bold()
+                    Picker("", selection: $bindings.captureMode) {
+                        ForEach(CaptureMode.allCases, id: \.self) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: bindings.captureMode) { _, _ in
+                        KeyBindingsController.shared.save(bindings)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Visual Effects (Area Selection):")
+                        .font(.subheadline).bold()
+                    Toggle("Show Selection Border", isOn: $bindings.showSelectionBorder)
+                        .onChange(of: bindings.showSelectionBorder) { _, _ in
+                            KeyBindingsController.shared.save(bindings)
+                        }
+                    Toggle("Flash Screen on Capture", isOn: $bindings.flashScreenOnCapture)
+                        .onChange(of: bindings.flashScreenOnCapture) { _, _ in
+                            KeyBindingsController.shared.save(bindings)
+                        }
+                    Toggle("Show Crosshair Cursor", isOn: $bindings.showCrosshair)
+                        .onChange(of: bindings.showCrosshair) { _, _ in
+                            KeyBindingsController.shared.save(bindings)
+                        }
+                }
+
+                Divider()
+
                 Toggle("Show AI analysis results locally", isOn: $showLocalAnalysis)
                     .onChange(of: showLocalAnalysis) { _, newValue in
                         UserDefaults.standard.set(newValue, forKey: "showLocalAnalysis")
@@ -164,7 +203,7 @@ struct ScreeningAssistantApp: App {
                 Button("Kill Agent") { NSApp.terminate(nil) }
             }
             .padding()
-            .frame(width: 400, height: 740)
+            .frame(width: 400, height: 880)
         }
     }
 
@@ -374,6 +413,7 @@ class MenuBarLifecycleManager: NSObject, ObservableObject, NSWindowDelegate {
         let bindings = KeyBindingsController.shared.current
         let toggleMods = modifierFlags(bindings.toggleModifiers)
         let captureMods = modifierFlags(bindings.captureModifiers)
+        let areaCaptureMods = modifierFlags(bindings.areaCaptureModifiers)
 
         if currentModifiers == toggleMods, keysPressed == bindings.toggleKey {
             toggleMenuVisibility()
@@ -381,6 +421,10 @@ class MenuBarLifecycleManager: NSObject, ObservableObject, NSWindowDelegate {
         }
         if currentModifiers == captureMods, keysPressed == bindings.captureKey {
             dispatchScreenCapture()
+            return true
+        }
+        if currentModifiers == areaCaptureMods, keysPressed == bindings.areaCaptureKey {
+            dispatchAreaCapture()
             return true
         }
         return false
@@ -414,6 +458,20 @@ class MenuBarLifecycleManager: NSObject, ObservableObject, NSWindowDelegate {
         }
         LogStore.shared.log("[Trigger] Hotkey Activated: Initializing ScreenCaptureKit buffer payload pipeline...",
                             attributes: ["event": "screen_capture"])
+        OtelTracer.shared.endSpan(span, status: .ok)
+    }
+
+    private func dispatchAreaCapture() {
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+        let span = OtelTracer.shared.startSpan("area.capture.trigger", attributes: [
+            "component": "keyboard",
+            "action": "area_capture"
+        ])
+        Task { [weak self] in
+            try? await self?.captureManager.captureAndStore()
+        }
+        LogStore.shared.log("[Trigger] Hotkey Activated: Initializing area selection capture...",
+                            attributes: ["event": "area_capture"])
         OtelTracer.shared.endSpan(span, status: .ok)
     }
 }

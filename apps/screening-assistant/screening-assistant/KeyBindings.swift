@@ -3,18 +3,36 @@ import AppKit
 
 struct KeyBindings: Codable, Equatable {
     var toggleKey = "'"
-    var captureKey = "."
     var toggleModifiers = ["command", "option", "shift"]
+    var captureKey = "."
     var captureModifiers = ["command", "option", "shift"]
+    var areaCaptureKey = ","
+    var areaCaptureModifiers = ["command", "option", "shift"]
     var analysisPrompt = "Describe what you see in this screenshot, paying attention to UI elements, text content, layout, and any highlighted or selected items."
     var webSocketURL = "ws://localhost:8000/ws/analysis"
     var displayName = "Assistant"
     var screenshotStoragePath = KeyBindings.defaultScreenshotPath
+    var captureMode: CaptureMode = .fullScreen
+    var showSelectionBorder = false
+    var flashScreenOnCapture = false
+    var showCrosshair = false
 
     private static var defaultScreenshotPath: String {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let bundleID = Bundle.main.bundleIdentifier ?? "br.eti.elio.screening-assistant"
         return appSupport.appendingPathComponent("\(bundleID)/screenshots").path
+    }
+}
+
+enum CaptureMode: String, Codable, CaseIterable {
+    case fullScreen = "full"
+    case areaSelection = "area"
+
+    var label: String {
+        switch self {
+        case .fullScreen: return "Full Screen"
+        case .areaSelection: return "Area Selection"
+        }
     }
 }
 

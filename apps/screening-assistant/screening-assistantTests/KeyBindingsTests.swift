@@ -18,17 +18,21 @@ final class KeyBindingsTests: XCTestCase {
     func testDefaultValues() {
         let b = KeyBindings()
         XCTAssertEqual(b.toggleKey, "'")
-        XCTAssertEqual(b.captureKey, ".")
         XCTAssertEqual(b.toggleModifiers, ["command", "option", "shift"])
+        XCTAssertEqual(b.captureKey, ".")
         XCTAssertEqual(b.captureModifiers, ["command", "option", "shift"])
+        XCTAssertEqual(b.areaCaptureKey, ",")
+        XCTAssertEqual(b.areaCaptureModifiers, ["command", "option", "shift"])
     }
 
     func testCodableRoundTrip() throws {
         let original = KeyBindings(
             toggleKey: "x",
-            captureKey: "z",
             toggleModifiers: ["command", "control"],
-            captureModifiers: ["option", "shift"]
+            captureKey: "z",
+            captureModifiers: ["option", "shift"],
+            areaCaptureKey: ",",
+            areaCaptureModifiers: ["command", "option", "shift"]
         )
         let data = try PropertyListEncoder().encode(original)
         let decoded = try PropertyListDecoder().decode(KeyBindings.self, from: data)
@@ -36,7 +40,14 @@ final class KeyBindingsTests: XCTestCase {
     }
 
     func testCodableWithEmptyModifiers() throws {
-        let original = KeyBindings(toggleKey: "a", captureKey: "b", toggleModifiers: [], captureModifiers: [])
+        let original = KeyBindings(
+            toggleKey: "a",
+            toggleModifiers: [],
+            captureKey: "b",
+            captureModifiers: [],
+            areaCaptureKey: ",",
+            areaCaptureModifiers: ["command", "option", "shift"]
+        )
         let data = try PropertyListEncoder().encode(original)
         let decoded = try PropertyListDecoder().decode(KeyBindings.self, from: data)
         XCTAssertEqual(original, decoded)
@@ -44,7 +55,14 @@ final class KeyBindingsTests: XCTestCase {
 
     func testCodableAllModifiers() throws {
         let all: [String] = ["command", "option", "shift", "control"]
-        let original = KeyBindings(toggleKey: "t", captureKey: "s", toggleModifiers: all, captureModifiers: all)
+        let original = KeyBindings(
+            toggleKey: "t",
+            toggleModifiers: all,
+            captureKey: "s",
+            captureModifiers: all,
+            areaCaptureKey: ",",
+            areaCaptureModifiers: all
+        )
         let data = try PropertyListEncoder().encode(original)
         let decoded = try PropertyListDecoder().decode(KeyBindings.self, from: data)
         XCTAssertEqual(original, decoded)
@@ -58,13 +76,21 @@ final class KeyBindingsTests: XCTestCase {
             let b = ctrl.current
             XCTAssertEqual(b.toggleKey, "'")
             XCTAssertEqual(b.captureKey, ".")
+            XCTAssertEqual(b.areaCaptureKey, ",")
         }
     }
 
     func testControllerSaveAndRead() {
         withController {
             let ctrl = KeyBindingsController.shared
-            let newBindings = KeyBindings(toggleKey: "q", captureKey: "w", toggleModifiers: ["control"], captureModifiers: ["command"])
+            let newBindings = KeyBindings(
+                toggleKey: "q",
+                toggleModifiers: ["control"],
+                captureKey: "w",
+                captureModifiers: ["command"],
+                areaCaptureKey: ",",
+                areaCaptureModifiers: ["command", "option", "shift"]
+            )
             ctrl.save(newBindings)
             XCTAssertEqual(ctrl.current, newBindings)
         }
@@ -167,13 +193,24 @@ final class KeyBindingsTests: XCTestCase {
     }
 
     func testCustomModifierRoundTrip() {
-        let b = KeyBindings(toggleKey: "x", captureKey: "y", toggleModifiers: ["control"], captureModifiers: ["option"])
+        let b = KeyBindings(
+            toggleKey: "x",
+            toggleModifiers: ["control"],
+            captureKey: "y",
+            captureModifiers: ["option"],
+            areaCaptureKey: ",",
+            areaCaptureModifiers: ["command", "option", "shift"]
+        )
         let toggleFlags = modifierFlags(b.toggleModifiers)
         let captureFlags = modifierFlags(b.captureModifiers)
+        let areaFlags = modifierFlags(b.areaCaptureModifiers)
         XCTAssertTrue(toggleFlags.contains(.control))
         XCTAssertFalse(toggleFlags.contains(.command))
         XCTAssertTrue(captureFlags.contains(.option))
         XCTAssertFalse(captureFlags.contains(.command))
+        XCTAssertTrue(areaFlags.contains(.command))
+        XCTAssertTrue(areaFlags.contains(.option))
+        XCTAssertTrue(areaFlags.contains(.shift))
     }
 
     // MARK: - Menu bar icon toggle
@@ -237,9 +274,12 @@ final class KeyBindingsTests: XCTestCase {
     func testToggleWorksWithUpdatedKeybindings() {
         withController {
             let customBindings = KeyBindings(
-                toggleKey: "t", captureKey: ".",
+                toggleKey: "t",
                 toggleModifiers: ["control", "shift"],
-                captureModifiers: ["command", "option", "shift"]
+                captureKey: ".",
+                captureModifiers: ["command", "option", "shift"],
+                areaCaptureKey: ",",
+                areaCaptureModifiers: ["command", "option", "shift"]
             )
             KeyBindingsController.shared.save(customBindings)
 
@@ -264,9 +304,12 @@ final class KeyBindingsTests: XCTestCase {
     func testToggleWithUpdatedKeybindingAndWrongModifiersDoesNothing() {
         withController {
             let customBindings = KeyBindings(
-                toggleKey: "t", captureKey: ".",
+                toggleKey: "t",
                 toggleModifiers: ["control", "shift"],
-                captureModifiers: ["command", "option", "shift"]
+                captureKey: ".",
+                captureModifiers: ["command", "option", "shift"],
+                areaCaptureKey: ",",
+                areaCaptureModifiers: ["command", "option", "shift"]
             )
             KeyBindingsController.shared.save(customBindings)
 

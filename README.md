@@ -1,4 +1,4 @@
-# Screening LLM Assistant
+# Screening Assistant
 
 Multi-platform screen intelligence pipeline: macOS capture node and Python FastAPI AI server.
 

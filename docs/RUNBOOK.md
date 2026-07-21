@@ -1,6 +1,6 @@
-# Screening LLM Assistant — Runbook
+# Screening Assistant — Runbook
 
-This runbook contains all essential commands for building, testing, and running the Screening LLM Assistant components.
+This runbook contains all essential commands for building, testing, and running the Screening Assistant components.
 
 ---
 
