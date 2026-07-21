@@ -21,6 +21,15 @@ class AnalyzeResponse(BaseModel):
     )
 
 
+class AnalysisPayload(BaseModel):
+    id: str
+    timestamp: str
+    model: str
+    response: str
+    prompt: str | None = None
+    imageBase64: None = None
+
+
 class HealthResponse(BaseModel):
     status: str = "ok"
 

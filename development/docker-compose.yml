@@ -4,20 +4,15 @@ services:
       context: ../services/ai-server
       dockerfile: Dockerfile
     container_name: screening-ai-server
-    hostname: ai-server 
+    hostname: ai-server
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
       - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8002:8002"
     environment:
-      - AI_SERVER_HEALTH_PORT=8001
-      - AI_SERVER_OTEL_COLLECTOR_ENDPOINT=http://otel-collector:4318
-      - AI_SERVER_OTEL_LOG_LEVEL=INFO
-      - AI_SERVER_OTEL_METRICS_PREFIX=screening_llm
-      - AI_SERVER_OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - AI_SERVER_METRICS_PORT=9000
-      - AI_SERVER_PROVIDER=ollama
-      - AI_SERVER_DEFAULT_MODEL=gemma4
       - AI_SERVER_ENVIROMENT=development
+    volumes:
+      - ../services/ai-server/configs:/app/configs:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8001/health/live', timeout=2).raise_for_status()"]
       interval: 10s

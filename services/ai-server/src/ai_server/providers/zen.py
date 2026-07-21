@@ -22,12 +22,21 @@ class ZenProvider(AnalysisProvider):
             raise ValueError("zen_api_key is required when using the Zen provider")
         self.api_key = settings.zen_api_key
 
+    @staticmethod
+    def _detect_mime(_image: bytes) -> str:
+        if _image[:4] == b"\x89PNG":
+            return "image/png"
+        if _image[:2] in {b"\xff\xd8", b"\xff\xd9"} or _image[6:10] in {b"JFIF", b"Exif"}:
+            return "image/jpeg"
+        return "image/png"
+
     async def analyze(self, image: bytes, prompt: str) -> AnalysisResult:
         start = time.monotonic()
+        mime = self._detect_mime(image)
         b64_image = b64encode(image).decode()
         content: list[dict[str, Any]] = [
             {"type": "text", "text": prompt},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}},
+            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64_image}"}},
         ]
         payload = {
             "model": self.model,

@@ -2,7 +2,7 @@
 
 ## Project
 
-Multi-platform screen intelligence pipeline: **macOS background agent** (SwiftUI/AppKit, no Dock icon) captures screen silently via ScreenCaptureKit → **AI inference server** (Python FastAPI, uv-managed) → **iOS/iPadOS client** (scaffold only).
+Multi-platform screen intelligence pipeline: **macOS background agent** (SwiftUI/AppKit, no Dock icon) captures screen silently via ScreenCaptureKit → **AI inference server** (Python FastAPI, uv-managed).
 
 ## Commands
 
@@ -10,8 +10,8 @@ Use `mise run <task>` — not raw xcodebuild/pytest directly. Key tasks:
 
 | Task | What it runs |
 |------|-------------|
-| `mise run test:macOS` | macOS XCTest suite (34 tests) |
-| `mise run test:ai-server` | AI server unit tests (109 tests, 100% cov) |
+| `mise run test:macOS` | macOS XCTest suite (36 tests) |
+| `mise run test:ai-server` | AI server unit tests (117 tests, 100% cov) |
 | `mise run build:macOS` | Build macOS app (Debug) |
 | `mise run compose-up` | Start OTel + Jaeger + Loki + Prometheus + Grafana |
 | `mise run lint:macOS` | SwiftLint (strict mode) |
@@ -28,16 +28,18 @@ For raw xcodebuild/pytest commands see `docs/RUNBOOK.md`.
 ## Structure
 
 ```
-clients/ai-screening-assistant/   # NOT apps/ — this is the actual path
-├── macos-ai-screening-assistant/   # Source: 6 Swift files
-├── macos-ai-screening-assistantTests/  # XCTest suite
-├── ios-ai-screening-assistant/     # Scaffold only
-├── ai-screening-assistant.xcworkspace/
-services/ai-server/                 # Python FastAPI, uv, 16 modules
+apps/screening-assistant/   # NOT apps/ — this is the actual path
+├── screening-assistant/   # Source: 6 Swift files
+├── screening-assistantTests/  # XCTest suite (36 tests)
+├── screening-assistant.xcodeproj/
+├── screening-assistant.xcworkspace/
+apps/shared/                    # ScreeningShared Swift package
+├── Sources/ScreeningShared/   # 5 shared source files
+services/ai-server/             # Python FastAPI, uv, 16 modules
 ├── src/ai_server/
-├── tests/                          # 109 tests
-development/docker-compose.yml      # Full observability stack
-docs/                               # README.md, RUNBOOK.md, MANIFEST.md
+├── tests/                      # 117 tests
+development/docker-compose.yml  # Full observability stack
+docs/                           # README.md, RUNBOOK.md, MANIFEST.md
 ```
 
 ## macOS Gotchas

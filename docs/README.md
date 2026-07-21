@@ -2,7 +2,7 @@
 
 ## Overview
 
-A multi-platform pipeline that captures macOS screen content via hotkeys, sends it to an AI inference server, and displays analysis results on iPad/iPhone. The macOS node is a background agent (no Dock icon). All LLM output renders exclusively on the mobile client.
+A multi-platform pipeline that captures macOS screen content via hotkeys, sends it to an AI inference server for analysis, and displays results. The macOS node is a background agent (no Dock icon).
 
 ---
 
@@ -15,7 +15,7 @@ A multi-platform pipeline that captures macOS screen content via hotkeys, sends 
 | **macOS App** | SwiftUI + AppKit | Background agent; keyboard hooks, screen capture, local screenshot store |
 | **AI Server** | Python FastAPI (uv-managed) | Image analysis via Ollama or OpenCode Zen API |
 | **Dev Stack** | Docker, OTel Collector, Jaeger, Loki, Prometheus, Grafana, cAdvisor | Full observability pipeline |
-| **iOS App** | SwiftUI | (scaffold) placeholder for future supervisor client |
+
 
 ### Port Map
 
@@ -36,7 +36,7 @@ A multi-platform pipeline that captures macOS screen content via hotkeys, sends 
 ```mermaid
 graph TB
     subgraph "macOS App"
-        App[macos_screening_llm_assistantApp] --> Init[setupOpenTelemetryPipeline]
+        App[ScreeningAssistantApp] --> Init[setupOpenTelemetryPipeline]
         App --> MBC[MenuBarLifecycleManager]
         App --> StoreRef[ScreenshotStore.shared.saveToDisk]
 
@@ -55,10 +55,10 @@ graph TB
         SM --> JSON[JSONEncoder → manifest.json]
     end
 
-    subgraph "Tests (143 total)"
+    subgraph "Tests (153 total)"
         KBT[KeyBindingsTests] -->|26 tests| KBC[KeyBindingsController]
         SST[ScreenshotsTests] -->|8 tests| STS[ScreenshotStore]
-        AST[AiServerTests] -->|109 tests| All[100% coverage, 16 modules]
+        AST[AiServerTests] -->|117 tests| All[100% coverage, 16 modules]
     end
 ```
 
@@ -148,7 +148,7 @@ graph TB
 
 ### Test Suite
 
-**109 AI Server tests (100% coverage, 16 modules, 482 statements):**
+**117 AI Server tests (100% coverage, 16 modules, 482 statements):**
 
 | Module | Tests | Coverage |
 |--------|-------|----------|
@@ -165,7 +165,7 @@ graph TB
 | `local_only.py` | 10 | 100% |
 | **e2e (integration)** | 9 | N/A |
 
-**34 macOS tests (XCTest):**
+**36 macOS tests (XCTest):**
 
 | Suite | Tests |
 |-------|-------|
@@ -245,30 +245,15 @@ sequenceDiagram
 | Ollama (local) | **Implemented** |
 | OpenCode Zen | **Implemented** |
 
-### Step 3: iOS/iPadOS Client — Render AI Response
-
-```mermaid
-sequenceDiagram
-    participant iOS as iPad/iPhone Client
-    participant Mac as macOS Agent
-    participant Server as AI Server
-
-    iOS->>iOS: Open app → establish WebSocket to macOS
-    Mac->>Server: Capture + analyze image
-    Server-->>Mac: Analysis response
-    Mac->>iOS: Forward over WebSocket
-    iOS->>iOS: Parse & render in SwiftUI
-```
-
 ### Directory Topology
 
 ```
 .
 ├── apps
-│   ├── macos-ai-screening-assistant    # Capture node: SwiftUI + AppKit
-│   │   ├── macos-ai-screening-assistant/
-│   │   └── macos-ai-screening-assistantTests/
-│   └── ios-ai-screening-assistant      # (scaffold)
+│   └── screening-assistant
+│       ├── screening-assistant    # Capture node: SwiftUI + AppKit
+│       │   ├── screening-assistant/
+│       │   └── screening-assistantTests/
 ├── services
 │   └── ai-server                        # Python FastAPI, uv-managed
 │       ├── src/ai_server/
@@ -284,7 +269,7 @@ sequenceDiagram
 │       │   ├── schemas.py               # Pydantic models
 │       │   └── providers/               # AI provider implementations
 │       ├── configs/config.toml          # Default config
-│       ├── tests/                       # 109 tests (unit + e2e)
+│       ├── tests/                       # 117 tests (unit + e2e)
 │       └── Dockerfile                   # 3-stage build, uv, tini, non-root
 ├── docs
 │   ├── README.md                        # This file
@@ -317,8 +302,8 @@ sequenceDiagram
 
 ```bash
 xcodebuild test \
-  -project clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-screening-assistant" \
+  -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -parallel-testing-enabled NO
 ```
@@ -327,8 +312,8 @@ xcodebuild test \
 
 ```bash
 xcodebuild build \
-  -project clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-screening-assistant" \
+  -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -configuration Debug
 ```
@@ -337,8 +322,8 @@ xcodebuild build \
 
 ```bash
 xcodebuild test-without-building \
-  -project clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-screening-assistant" \
+  -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -parallel-testing-enabled NO
 ```

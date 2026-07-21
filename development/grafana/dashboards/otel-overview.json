@@ -33,7 +33,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (method, path, status) (rate(screening_llm_requests_total[1m]))",
+          "expr": "sum by (method, path, status) (rate(ai_screening_requests_total[1m]))",
           "legendFormat": "{{method}} {{path}} [{{status}}]"
         }
       ],
@@ -62,7 +62,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, method, path) (rate(screening_llm_request_duration_seconds_bucket[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, method, path) (rate(ai_screening_request_duration_seconds_bucket[1m])))",
           "legendFormat": "{{method}} {{path}}"
         }
       ],
@@ -91,7 +91,7 @@
       },
       "targets": [
         {
-          "expr": "screening_llm_active_requests",
+          "expr": "ai_screening_active_requests",
           "legendFormat": "active"
         }
       ],
@@ -137,7 +137,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(screening_llm_requests_total{status=~\"4..|5..\"}[1m])) / sum(rate(screening_llm_requests_total[1m]))",
+          "expr": "sum(rate(ai_screening_requests_total{status=~\"4..|5..\"}[1m])) / sum(rate(ai_screening_requests_total[1m]))",
           "legendFormat": "error ratio"
         }
       ],
@@ -179,7 +179,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (model, provider, status) (rate(screening_llm_analysis_total[1m]))",
+          "expr": "sum by (model, provider, status) (rate(ai_screening_analysis_total[1m]))",
           "legendFormat": "{{model}} {{provider}} [{{status}}]"
         }
       ],
@@ -208,7 +208,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, model, provider) (rate(screening_llm_analysis_duration_seconds_bucket[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, model, provider) (rate(ai_screening_analysis_duration_seconds_bucket[1m])))",
           "legendFormat": "{{model}} {{provider}}"
         }
       ],
@@ -237,7 +237,7 @@
       },
       "targets": [
         {
-          "expr": "rate(screening_llm_image_bytes_total[1m])",
+          "expr": "rate(ai_screening_image_bytes_total[1m])",
           "legendFormat": "bytes/s"
         }
       ],
@@ -277,7 +277,7 @@
       },
       "targets": [
         {
-          "expr": "screening_llm_circuit_breaker_state{name=\"ollama\"}",
+          "expr": "ai_screening_circuit_breaker_state{name=\"ollama\"}",
           "legendFormat": "{{name}}"
         }
       ],
@@ -329,7 +329,7 @@
       },
       "targets": [
         {
-          "expr": "screening_llm_circuit_breaker_failures{name=\"ollama\"}",
+          "expr": "ai_screening_circuit_breaker_failures{name=\"ollama\"}",
           "legendFormat": "{{name}} failures"
         }
       ],
@@ -375,7 +375,7 @@
       },
       "targets": [
         {
-          "expr": "time() - screening_llm_last_analysis_timestamp_seconds",
+          "expr": "time() - ai_screening_last_analysis_timestamp_seconds",
           "legendFormat": "seconds ago"
         }
       ],
@@ -650,7 +650,7 @@
       },
       "targets": [
         {
-          "expr": "{service_name=~\"ai-server|macos-ai-screening-assistant\"} |= ``",
+          "expr": "{service_name=~\"ai-server|macos-screening-assistant\"} |= ``",
           "legendFormat": ""
         }
       ]

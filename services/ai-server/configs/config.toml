@@ -28,12 +28,12 @@ zen_model = "deepseek-v4-flash-free"
 bedrock_region = "us-east-1"
 bedrock_model = ""
 
-metrics_port = 9000
 health_port = 8001
+metrics_port = 8002
 
 cb_failure_threshold = 5
 cb_recovery_timeout = 30
 
 otel_collector_endpoint = ""
 otel_log_level = "INFO"
-otel_metrics_prefix = "screening_llm"
+otel_metrics_prefix = "ai_screening"

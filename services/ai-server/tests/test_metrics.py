@@ -30,8 +30,8 @@ class TestMetricsServer:
             transport=ASGITransport(app=app),
             base_url="http://test",
         ) as client:
-            await client.get("/api/health")
+            await client.get("/health/live")
             async with httpx.AsyncClient() as hc:
                 resp = await hc.get(f"http://127.0.0.1:{port}/metrics", timeout=5)
                 assert resp.status_code == 200
-                assert "screening_llm_requests_total" in resp.text
+                assert "ai_screening_requests_total" in resp.text

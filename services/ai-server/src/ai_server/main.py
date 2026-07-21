@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from fastapi import FastAPI, Request
+from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import _StreamingResponse
 
 from ai_server.circuit_breaker import CircuitBreaker
@@ -17,6 +18,45 @@ from ai_server.otel import setup_otel
 from ai_server.router import router
 
 logger = get_logger(__name__)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Screening LLM Assistant — AI Server",
+        version="0.1.0",
+        description="Receives screen captures from macOS agent and returns AI analysis via free endpoints.",
+        routes=app.routes,
+    )
+    openapi_schema["paths"]["/ws/analysis"] = {
+        "get": {
+            "summary": "Real-time analysis results",
+            "description": "WebSocket endpoint that broadcasts analysis results to all connected clients. Messages are JSON objects with type 'analysis', 'welcome', or 'error'.",
+            "responses": {
+                "101": {
+                    "description": "Switching Protocols - WebSocket connection established",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {"type": "string", "enum": ["welcome", "analysis", "error"]},
+                                    "message": {"type": "string"},
+                                    "model": {"type": "string"},
+                                    "response": {"type": "string"},
+                                    "processing_ms": {"type": "integer"},
+                                    "timestamp": {"type": "string", "format": "date-time"},
+                                },
+                            },
+                        }
+                    },
+                }
+            },
+        }
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
 
 
 @asynccontextmanager
@@ -44,6 +84,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(router)
+    app.openapi = custom_openapi
 
     if settings is None:
         settings = Settings()

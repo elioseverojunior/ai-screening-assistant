@@ -63,7 +63,6 @@ class TestCreateApp:
     def test_app_has_router_routes(self) -> None:
         app_instance = _app()
         paths = _collect_routes(app_instance)
-        assert "/api/health" in paths
         assert "/api/analyze" in paths
         assert "/health/live" in paths
         assert "/health/ready" in paths
@@ -84,7 +83,6 @@ class TestCreateApp:
 
     def test_app_module_includes_router_route(self) -> None:
         paths = _collect_routes(_real_app)
-        assert "/api/health" in paths
         assert "/api/analyze" in paths
         assert "/health/live" in paths
         assert "/health/ready" in paths
@@ -102,7 +100,7 @@ class TestCreateApp:
         spec = response.json()
         assert spec["info"]["title"] == "Screening LLM Assistant — AI Server"
         assert "/api/analyze" in spec["paths"]
-        assert "/api/health" in spec["paths"]
+        assert "/health/live" in spec["paths"]
 
     def test_redoc_ui_accessible(self) -> None:
         client = TestClient(_app())
@@ -118,14 +116,14 @@ class TestCreateApp:
         assert "charset=utf-8" in response.headers["content-type"]
         body = response.text
         assert "# HELP" in body
-        assert "screening_llm_requests_total" in body
+        assert "ai_screening_requests_total" in body
 
     def test_metrics_counts_requests(self) -> None:
         client = TestClient(_app())
-        client.get("/api/health")
+        client.get("/health/live")
         response = client.get("/metrics")
         body = response.text
-        assert 'screening_llm_requests_total{method="GET",path="/api/health",status="200"}' in body
+        assert 'ai_screening_requests_total{method="GET",path="/health/live",status="200"}' in body
 
     def test_create_app_without_settings_arg_uses_defaults(self) -> None:
         import os

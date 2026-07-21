@@ -36,7 +36,7 @@ exporters:
       insecure: true
   prometheus:
     endpoint: 0.0.0.0:8889
-    namespace: screening_llm
+    namespace: ai_screening
   otlp_http/loki:
     endpoint: http://loki:3100/otlp
     tls:

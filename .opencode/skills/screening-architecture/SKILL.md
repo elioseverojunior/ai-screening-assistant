@@ -25,7 +25,7 @@ description: |
 - `ScreenshotStore: NSObject` (required to prevent XCTest double-free)
 - `ScreenCaptureService.captureFullScreen()` is a stub returning `NSImage(size: .zero)`
   until `ScreenCaptureKit` integration is added
-- Test suite: `xcodebuild test ... -parallel-testing-enabled NO` (34 tests)
+- Test suite: `xcodebuild test ... -parallel-testing-enabled NO` (36 tests)
 
 ## Design references
 

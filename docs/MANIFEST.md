@@ -2,14 +2,14 @@
 
 ## System Overview
 
-Cross-device orchestration between macOS (data-capture sensor), AI inference server (Python FastAPI), and iPadOS (future supervisor client).
+Cross-device orchestration between macOS (data-capture sensor) and AI inference server (Python FastAPI).
 
 ---
 
 ## Component 1: macOS Client
 
-**Path:** `clients/ai-screening-assistant/macos-ai-screening-assistant`
-**Target:** macOS 14.0+ (Swift / SwiftUI / AppKit)
+**Path:** `apps/screening-assistant`
+**Target:** macOS 15.0+ (Swift / SwiftUI / AppKit)
 **Process Mode:** Agent / Accessory (`LSUIElement` = true, no Dock icon)
 
 ### Entitlements
@@ -26,12 +26,13 @@ Cross-device orchestration between macOS (data-capture sensor), AI inference ser
 | `⌘⌥⇧ + .` | Capture screen |
 | `⌘⌥⇧ + '` | Toggle menu bar visibility |
 
-### Test Suite (34 XCTest)
+### Test Suite (36 XCTest)
 
 | Suite | Tests |
 |---|---|
 | `KeyBindingsTests` | 26 (Codable, controller, modifier flags, conflicts, toggle) |
 | `ScreenshotsTests` | 8 (capture service, store CRUD, manager, disk persistence) |
+| `UploadServiceTests` | 2 (upload-and-analyze, server error) |
 
 ---
 
@@ -83,20 +84,13 @@ Cross-device orchestration between macOS (data-capture sensor), AI inference ser
 | Grafana | 3000 | Dashboards (18 panels, 5 rows) |
 | cAdvisor | 8080 | Container resource metrics |
 
-### Test Suite (109 tests, 100% coverage)
+### Test Suite (117 tests, 100% coverage)
 
 - 83 unit tests across 16 modules
 - 9 end-to-end integration tests
 - 17 local-only + health server + OTel tests
 
 ---
-
-## Component 3: iOS/iPadOS Client (Planned)
-
-**Path:** `clients/ai-screening-assistant/ios-ai-screening-assistant` (scaffold)
-**Target:** iOS 17.0+ (SwiftUI / Network.framework)
-
-Will receive AI analysis results from macOS via WebSocket and render in native SwiftUI.
 
 ---
 
@@ -105,5 +99,5 @@ Will receive AI analysis results from macOS via WebSocket and render in native S
 1. **Trigger:** macOS hotkey (`⌘⌥⇧+.`)
 2. **Capture:** ScreenCaptureKit → NSImage → TIFF/manifest on disk
 3. **Analyze (future):** POST image to AI Server `/api/analyze`
-4. **Bridge (future):** macOS forwards response to iOS via WebSocket
-5. **Render (future):** iOS displays analysis in SwiftUI
+4. **Bridge (future):** Server broadcasts response via WebSocket to clients
+5. **Render (future):** Connected clients display analysis

@@ -53,12 +53,16 @@ class Settings(BaseSettings):
 
     bedrock_region: str = "us-east-1"
     bedrock_model: str = ""
+    bedrock_profile: str = "default"
+    bedrock_use_mantle: bool = False
+    mantle_api_endpoint: str = ""
+    mantle_api_key: str = ""
 
     log_level: str = "INFO"
 
     otel_collector_endpoint: str = ""
     otel_log_level: str = "INFO"
-    otel_metrics_prefix: str = "screening_llm"
+    otel_metrics_prefix: str = "ai_screening"
 
     @classmethod
     def settings_customise_sources(

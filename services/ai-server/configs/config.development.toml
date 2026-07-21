@@ -1,0 +1,5 @@
+# Development configuration — loaded when AI_SERVER_ENVIROMENT=development
+
+provider = "bedrock"
+bedrock_region = "us-east-1"
+bedrock_profile = "default"

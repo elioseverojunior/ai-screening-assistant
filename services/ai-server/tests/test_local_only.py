@@ -79,12 +79,12 @@ class TestLocalOnlyMiddleware:
         app = FastAPI()
         add_local_only_middleware(app)
 
-        @app.get("/api/health")
+        @app.get("/test-path")
         async def health() -> dict:
             return {"status": "ok"}
 
         transport = ASGITransport(app=app, client=("8.8.8.8", 54321))
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-            resp = await client.get("/api/health")
+            resp = await client.get("/test-path")
             assert resp.status_code == 200
             assert resp.json() == {"status": "ok"}

@@ -4,21 +4,14 @@ color = true
 
 [env]
 ARCH = "{{exec(command='uname -m')}}"
-XCODE_CLIENTS_PROJECT_DIR = "clients/ai-screening-assistant"
-PROJECT_SUFFIX = "ai-screening-assistant"
-IOS_PROJECT_NAME = "ios-$PROJECT_SUFFIX"
-IOS_PROJECT_DIR = "$XCODE_CLIENTS_PROJECT_DIR/$IOS_PROJECT_NAME"
-IOS_XCODEPROJ = "$XCODE_CLIENTS_PROJECT_DIR/$IOS_PROJECT_NAME.xcodeproj"
-MACOS_PROJECT_NAME = "macos-$PROJECT_SUFFIX"
-MACOS_PROJECT_DIR = "$XCODE_CLIENTS_PROJECT_DIR/$MACOS_PROJECT_NAME"
-MACOS_XCODEPROJ = "$XCODE_CLIENTS_PROJECT_DIR/$MACOS_PROJECT_NAME.xcodeproj"
-MACOS_XCWORKSPACE = "$XCODE_CLIENTS_PROJECT_DIR/ai-screening-assistant.xcworkspace"
-IOS_XCWORKSPACE = "$XCODE_CLIENTS_PROJECT_DIR/ai-screening-assistant.xcworkspace"
+XCODE_CLIENTS_PROJECT_DIR = "apps/screening-assistant"
 PROJECT_NAME = "{{exec(command='basename $(pwd)')}}"
-MACOS_DEVELOPER_DERIVE_DATA_DIR="~/Library/Developer/Xcode/DerivedData/$MACOS_PROJECT_NAME-*"
+MACOS_XCODEPROJ = "$XCODE_CLIENTS_PROJECT_DIR/screening-assistant.xcodeproj"
+MACOS_XCWORKSPACE = "$XCODE_CLIENTS_PROJECT_DIR/screening-assistant.xcworkspace"
+MACOS_DEVELOPER_DERIVE_DATA_DIR="~/Library/Developer/Xcode/DerivedData/screening-assistant-*"
 
 [tools]
-uv = 'latest'
+uv = "latest"
 
 [hooks]
 enter = { task = "setup" }
@@ -32,12 +25,8 @@ run = '''
 set -eou pipefail
 
 echo "Architecture:             $ARCH"
-echo "iOS Project Name:         $IOS_PROJECT_NAME"
-echo "iOS Project Directory:    $IOS_PROJECT_DIR"
-echo "iOS Xcode Project:        $IOS_XCODEPROJ"
-echo "macOS Project Name:       $MACOS_PROJECT_NAME"
-echo "macOS Project Directory:  $MACOS_PROJECT_DIR"
 echo "macOS Xcode Project:      $MACOS_XCODEPROJ"
+echo "macOS Workspace:          $MACOS_XCWORKSPACE"
 echo "Project Name:             $PROJECT_NAME"
 '''
 
@@ -83,63 +72,43 @@ run = "docker compose -f development/docker-compose.yml ps"
 # XCode build tasks for macOS and iOS
 [tasks."build:macOS"]
 alias = ["build:macos", "build:osx", "osxb"]
-dir = ""
 usage = '''
 flag "-c --configuration <configuration>" default="Debug" help="Build configuration" {
   choices "Debug" "Release"
 }
 '''
 description = "Build the macOS app with xcodebuild"
-run = "xcodebuild build -project $MACOS_XCODEPROJ -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration ${usage_configuration}"
+run = "xcodebuild build -project $MACOS_XCODEPROJ -scheme \"screening-assistant\" -destination 'platform=macOS' -configuration ${usage_configuration}"
+
+[tasks."release:macOS"]
+alias = ["release:macos", "release:osx", "osxr"]
+description = "Build the macOS app with xcodebuild"
+depends = ["test:macOS"]
+run = "mise run build:macOS  --configuration Release"
 
 [tasks."test:macOS"]
 description = "Run unit tests"
-run = "xcodebuild test -project $MACOS_XCODEPROJ -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration Debug -parallel-testing-enabled NO"
+run = "xcodebuild test -project $MACOS_XCODEPROJ -scheme \"screening-assistant\" -destination 'platform=macOS' -configuration Debug -parallel-testing-enabled NO"
 
 [tasks."test:macOS:workspace"]
 description = "Run unit tests from workspace"
-run = "xcodebuild test -workspace $MACOS_XCWORKSPACE -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration Debug -parallel-testing-enabled NO"
+run = "xcodebuild test -workspace $MACOS_XCWORKSPACE -scheme \"screening-assistant\" -destination 'platform=macOS' -configuration Debug -parallel-testing-enabled NO"
 
 [tasks."build:macOS:workspace"]
 description = "Build the macOS app with xcodebuild from workspace"
-run = "xcodebuild build -workspace $MACOS_XCWORKSPACE -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration Debug"
+run = "xcodebuild build -workspace $MACOS_XCWORKSPACE -scheme \"screening-assistant\" -destination 'platform=macOS' -configuration Debug"
 
 [tasks."clean:macOS"]
 description = "Clean build artifacts and derived data"
-run = "rm -rf $MACOS_PROJECT_DIR/build $MACOS_DEVELOPER_DERIVE_DATA_DIR"
+run = "rm -rf apps/screening-assistant/build $MACOS_DEVELOPER_DERIVE_DATA_DIR"
 
 [tasks."lint:macOS"]
 description = "Run SwiftLint"
-run = "swiftlint lint --strict $MACOS_PROJECT_DIR/ 2>/dev/null; swiftlint lint --strict $MACOS_PROJECT_DIR/ 2>/dev/null || echo 'SwiftLint warnings found (non-blocking)'"
+run = "if which swiftlint >/dev/null 2>&1; then swiftlint lint --strict apps/screening-assistant/ 2>/dev/null || echo 'SwiftLint violations found (non-blocking)'; else echo 'SwiftLint not installed (non-blocking)'; fi"
 
 [tasks."format:macOS"]
 description = "Run SwiftFormat"
-run = "swiftformat $MACOS_PROJECT_DIR/ 2>/dev/null || true"
-
-# iOS tasks
-[tasks."build:iOS"]
-alias = ["build:ios"]
-dir = ""
-usage = '''
-flag "-c --configuration <configuration>" default="Debug" help="Build configuration" {
-  choices "Debug" "Release"
-}
-flag "-d --destination <destination>" default="platform=iOS Simulator,name=iPhone 16" help="Build destination"
-'''
-description = "Build the iOS app with xcodebuild"
-run = "xcodebuild build -project $IOS_XCODEPROJ -scheme \"ios-ai-screening-assistant\" -destination '${usage_destination}' -configuration ${usage_configuration}"
-
-[tasks."test:iOS"]
-description = "Run iOS unit tests"
-run = "xcodebuild test -project $IOS_XCODEPROJ -scheme \"ios-ai-screening-assistant\" -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug -parallel-testing-enabled NO"
-
-[tasks."test:iOS:workspace"]
-description = "Run iOS unit tests from workspace"
-run = "xcodebuild test -workspace $IOS_XCWORKSPACE -scheme \"ios-ai-screening-assistant\" -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug -parallel-testing-enabled NO"
-
-[tasks."build:iOS:workspace"]
-description = "Build the iOS app with xcodebuild from workspace"
-run = "xcodebuild build -workspace $IOS_XCWORKSPACE -scheme \"ios-ai-screening-assistant\" -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug"
+run = "swiftformat apps/screening-assistant/ 2>/dev/null || true"
 
 [tasks."sync:ai-server"]
 description = "Sync AI server dependencies with uv"
@@ -183,34 +152,28 @@ run = "open http://localhost:8000/docs"
 description = "List all macOS schemes"
 run = "xcodebuild -list -project $MACOS_XCODEPROJ"
 
-[tasks."list:schemes:iOS"]
-description = "List all iOS schemes"
-run = "xcodebuild -list -project $IOS_XCODEPROJ"
-
 [tasks."list:destinations:macOS"]
 description = "List macOS destinations"
-run = "xcodebuild -scheme \"macos-ai-screening-assistant\" -showdestinations"
-
-[tasks."list:destinations:iOS"]
-description = "List iOS Simulator destinations"
-run = "xcrun simctl list devices"
+run = "xcodebuild -scheme \"screening-assistant\" -showdestinations"
 
 # Archive & Export tasks
 [tasks."archive:macOS"]
 description = "Archive the macOS app for distribution"
-run = "xcodebuild archive -project $MACOS_XCODEPROJ -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -archivePath build/macos-ai-screening-assistant.xcarchive -configuration Release"
+depends = ["release:macOS"]
+run = "xcodebuild archive -project $MACOS_XCODEPROJ -scheme \"screening-assistant\" -destination 'platform=macOS' -archivePath build/screening-assistant.xcarchive -configuration Release"
 
 [tasks."export:macOS"]
 description = "Export the archived macOS app (requires ExportOptions.plist)"
-run = "xcodebuild -exportArchive -archivePath build/macos-ai-screening-assistant.xcarchive -exportPath build/Export -exportOptionsPlist ExportOptions.plist"
+depends = ["archive:macOS"]
+run = "xcodebuild -exportArchive -archivePath build/screening-assistant.xcarchive -exportPath build/Export -exportOptionsPlist ExportOptions.plist"
 
 [tasks."install:macOS"]
 description = "Install the exported macOS app to /Applications"
-depends = ["archive:macOS", "export:macOS"]
+depends = ["export:macOS"]
 run = '''
 #!/usr/bin/env bash
 set -eou pipefail
-APP_PATH="build/Export/macos-ai-screening-assistant.app"
+APP_PATH="build/Export/Assistant.app"
 if [ ! -d "$APP_PATH" ]; then
   echo "App not found at $APP_PATH. Run 'mise run archive:macOS && mise run export:macOS' first."
   exit 1

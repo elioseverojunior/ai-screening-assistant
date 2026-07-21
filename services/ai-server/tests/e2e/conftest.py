@@ -117,7 +117,7 @@ def server_url(ollama_mock_server: str) -> Iterator[str]:
     )
 
     try:
-        _wait_for_ok(f"{url}/api/health", timeout=15)
+        _wait_for_ok(f"{url}/health/live", timeout=15)
         yield url
     finally:
         proc.terminate()

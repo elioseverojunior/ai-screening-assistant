@@ -236,6 +236,19 @@ class TestZenProvider:
             decoded = b64decode(b64_part)
             assert decoded == b"\x89PNG\r\n\x1a\n"
 
+    async def test_sends_jpeg_with_correct_mime(self, provider: AnalysisProvider) -> None:
+        with patch.object(httpx.AsyncClient, "post") as mock_post:
+            mock_post.return_value = _make_zen_response(
+                200, {"choices": [{"message": {"content": "ok"}}]}
+            )
+
+            jpeg_bytes = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00" + b"fake-jpeg-data"
+            await provider.analyze(image=jpeg_bytes, prompt="X")
+
+            call_kwargs = mock_post.call_args[1]
+            image_url = call_kwargs["json"]["messages"][0]["content"][1]["image_url"]["url"]
+            assert image_url.startswith("data:image/jpeg;base64,")
+
     async def test_sends_api_key(self, provider: AnalysisProvider) -> None:
         with patch.object(httpx.AsyncClient, "post") as mock_post:
             mock_post.return_value = _make_zen_response(

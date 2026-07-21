@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 from httpx import ASGITransport, AsyncClient
+from starlette.testclient import TestClient
 
 from ai_server.config import Settings
 from ai_server.main import create_app
@@ -11,9 +12,9 @@ from ai_server.providers import AnalysisResult
 
 class TestHealth:
     async def test_health_returns_ok(self, client: AsyncClient) -> None:
-        response = await client.get("/api/health")
+        response = await client.get("/health/live")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.json() == {"status": "alive"}
 
     async def test_liveness_returns_alive(self, client: AsyncClient) -> None:
         response = await client.get("/health/live")
@@ -232,3 +233,70 @@ class TestAnalyze:
         assert response.status_code == 200
         data = response.json()
         assert data["response"] == "ok"
+
+
+class TestWebSocket:
+    def test_websocket_connect(self, app):
+        with TestClient(app).websocket_connect("/ws/analysis") as ws:
+            data = ws.receive_json()
+            assert data == {"type": "welcome", "message": "Connected to analysis broadcast"}
+
+    def test_websocket_receives_analysis_broadcast(self, app, sample_png):
+        client = TestClient(app)
+        with client.websocket_connect("/ws/analysis") as ws:
+            ws.receive_json()
+            with patch(
+                "ai_server.providers.ollama.OllamaProvider.analyze",
+                new_callable=AsyncMock,
+            ) as mock_analyze:
+                mock_analyze.return_value = AnalysisResult(
+                    response="I see a red image.",
+                    model="llama3.2-vision",
+                    processing_ms=42,
+                )
+                client.post(
+                    "/api/analyze",
+                    files={"file": ("test.png", sample_png, "image/png")},
+                    data={"prompt": "Describe this image"},
+                )
+            data = ws.receive_json()
+            assert data["model"] == "llama3.2-vision"
+            assert data["response"] == "I see a red image."
+            assert data["imageBase64"] is None
+            assert "id" in data
+            assert "timestamp" in data
+
+    def test_multiple_websocket_clients_receive_broadcast(self, app, sample_png):
+        client = TestClient(app)
+        with (
+            client.websocket_connect("/ws/analysis") as ws1,
+            client.websocket_connect("/ws/analysis") as ws2,
+        ):
+            ws1.receive_json()
+            ws2.receive_json()
+            with patch(
+                "ai_server.providers.ollama.OllamaProvider.analyze",
+                new_callable=AsyncMock,
+            ) as mock_analyze:
+                mock_analyze.return_value = AnalysisResult(
+                    response="test",
+                    model="llama3.2-vision",
+                    processing_ms=5,
+                )
+                client.post(
+                    "/api/analyze",
+                    files={"file": ("test.png", sample_png, "image/png")},
+                    data={"prompt": "Describe"},
+                )
+            data1 = ws1.receive_json()
+            data2 = ws2.receive_json()
+            assert data1 == data2
+
+    async def test_broadcast_removes_dead_connections(self):
+        from ai_server.router import manager
+
+        dead = AsyncMock()
+        dead.send_json = AsyncMock(side_effect=Exception("gone"))
+        manager.active_connections.append(dead)
+        await manager.broadcast({"test": True})
+        assert dead not in manager.active_connections

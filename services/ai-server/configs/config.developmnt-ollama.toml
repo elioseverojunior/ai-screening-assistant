@@ -1,0 +1,16 @@
+# Development configuration — loaded when AI_SERVER_ENVIROMENT=development
+
+provider = "ollama"
+
+ollama_base_url = "http://host.docker.internal:11434"
+default_model = "gemma4"
+
+otel_collector_endpoint = "http://otel-collector:4318"
+otel_log_level = "INFO"
+otel_metrics_prefix = "ai_screening"
+
+metrics_port = 8002
+health_port = 8001
+
+cb_failure_threshold = 5
+cb_recovery_timeout = 30

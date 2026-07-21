@@ -1,13 +1,13 @@
 # Screening LLM Assistant
 
-Multi-platform screen intelligence pipeline: macOS capture node, Python FastAPI AI server, iOS/iPadOS supervisor client (planned).
+Multi-platform screen intelligence pipeline: macOS capture node and Python FastAPI AI server.
 
 ## Quick Start
 
 ```bash
 # macOS app tests
-xcodebuild test -project apps/macos-ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-ai-screening-assistant" -destination "platform=macOS"
+xcodebuild test -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" -destination "platform=macOS"
 
 # AI server tests
 cd services/ai-server && uv run pytest --cov=ai_server
@@ -20,10 +20,10 @@ docker compose -f development/docker-compose.yml up -d
 
 | Component | Stack | Status |
 |---|---|---|
-| **macOS Agent** | SwiftUI + AppKit | ✅ 34 XCTest passing |
-| **AI Server** | Python FastAPI (uv) | ✅ 109 tests, 100% coverage |
+| **macOS Agent** | SwiftUI + AppKit | ✅ 36 XCTest passing |
+| **AI Server** | Python FastAPI (uv) | ✅ 117 tests, 100% coverage |
 | **Observability** | OTel + Jaeger + Loki + Prometheus + Grafana + cAdvisor | ✅ |
-| **iOS Client** | SwiftUI | 📋 Planned |
+
 
 ### Ports
 

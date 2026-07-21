@@ -11,9 +11,9 @@ pytestmark = pytest.mark.e2e
 
 class TestHealth:
     async def test_health_returns_ok(self, client: httpx.AsyncClient) -> None:
-        response = await client.get("/api/health")
+        response = await client.get("/health/live")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.json() == {"status": "alive"}
 
     async def test_liveness_returns_alive(self, client: httpx.AsyncClient) -> None:
         response = await client.get("/health/live")

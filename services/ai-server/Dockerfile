@@ -57,7 +57,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 # Switch to the unprivileged user
 USER 10001
 
-EXPOSE 8000 8001 9000
+EXPOSE 8000 8001 8002
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 

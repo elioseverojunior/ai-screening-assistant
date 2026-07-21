@@ -7,12 +7,8 @@
       "path": "docs",
       "description": "Use for architecture, roadmap, and design decisions"
     },
-    "clients": {
-      "path": "clients/ai-screening-assistant/PROJECT.md",
-      "description": "Use for multiplatform macOS background agent & iOS viewer client architecture"
-    },
     "xcode-scheme": {
-      "path": "clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj/xcshareddata/xcschemes/macos-screening-assistant.xcscheme",
+      "path": "apps/screening-assistant/screening-assistant.xcodeproj/xcshareddata/xcschemes/screening-assistant.xcscheme",
       "description": "Xcode test scheme configuration with -parallel-testing-enabled NO",
       "hidden": true
     }
@@ -23,7 +19,7 @@
       "template": "Run the macOS Xcode test suite:\n\n```bash\nmise run test:macOS\n```"
     },
     "test:ai-server": {
-      "description": "Run the Python AI server unit tests (113 tests, 100% coverage)",
+      "description": "Run the Python AI server unit tests (117 tests, 100% coverage)",
       "template": "Run the AI server pytest suite:\n\n```bash\nmise run test:ai-server\n```"
     },
     "build:macOS": {

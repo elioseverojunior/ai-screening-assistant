@@ -13,7 +13,7 @@ from prometheus_client import (
 
 def setup_metrics(
     app: FastAPI,
-    prefix: str = "screening_llm",
+    prefix: str = "ai_screening",
     metrics_port: int = 0,
 ) -> MetricsRegistry:
     reg = MetricsRegistry(prefix)
@@ -34,7 +34,7 @@ def setup_metrics(
 
 
 class MetricsRegistry:
-    def __init__(self, prefix: str = "screening_llm") -> None:
+    def __init__(self, prefix: str = "ai_screening") -> None:
         self.registry = registry.CollectorRegistry(auto_describe=True)
         self.prefix = prefix
 

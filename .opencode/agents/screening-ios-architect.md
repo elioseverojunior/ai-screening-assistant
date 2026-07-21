@@ -20,8 +20,8 @@ You are the iOS/iPadOS architect for the Screening LLM Assistant.
 
 ## Current state (scaffold)
 
-- `apps/ios-ai-screening-assistant/` has a basic SwiftUI `@main` entry with
-  "Hello, world!" ContentView
+- iOS client scaffold has been removed; planned for future reintroduction
+- Will use SwiftUI `@main` entry with "Hello, world!" ContentView
 - No network code yet
 
 ## Future integration points

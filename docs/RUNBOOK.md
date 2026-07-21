@@ -7,33 +7,32 @@ This runbook contains all essential commands for building, testing, and running 
 ## Table of Contents
 
 1. [macOS App](#macos-app)
-2. [iOS App](#ios-app)
-3. [AI Server (Python/FastAPI)](#ai-server-pythonfastapi)
-4. [Observability Stack (Docker)](#observability-stack-docker)
-5. [Quick Reference (mise tasks)](#quick-reference-mise-tasks)
+2. [AI Server (Python/FastAPI)](#ai-server-pythonfastapi)
+3. [Observability Stack (Docker)](#observability-stack-docker)
+4. [Quick Reference (mise tasks)](#quick-reference-mise-tasks)
 
 ---
 
 ## macOS App
 
-**Project:** `clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj`
-**Scheme:** `macos-ai-screening-assistant`  
-**Workspace:** `clients/ai-screening-assistant/ai-screening-assistant.xcworkspace`
+**Project:** `apps/screening-assistant/screening-assistant.xcodeproj`
+**Scheme:** `screening-assistant`  
+**Workspace:** `apps/screening-assistant/ai-screening-assistant.xcworkspace`
 
 ### Build
 
 ```bash
 # From workspace (recommended — resolves Swift Package Manager dependencies)
 xcodebuild build \
-  -workspace clients/ai-screening-assistant/ai-screening-assistant.xcworkspace \
-  -scheme "macos-ai-screening-assistant" \
+  -workspace apps/screening-assistant/ai-screening-assistant.xcworkspace \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -configuration Debug
 
 # From project directly
 xcodebuild build \
-  -project clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-ai-screening-assistant" \
+  -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -configuration Debug
 ```
@@ -43,15 +42,15 @@ xcodebuild build \
 ```bash
 # From workspace (recommended)
 xcodebuild test \
-  -workspace clients/ai-screening-assistant/ai-screening-assistant.xcworkspace \
-  -scheme "macos-ai-screening-assistant" \
+  -workspace apps/screening-assistant/ai-screening-assistant.xcworkspace \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -parallel-testing-enabled NO
 
 # From project directly
 xcodebuild test \
-  -project clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-ai-screening-assistant" \
+  -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -parallel-testing-enabled NO
 ```
@@ -60,8 +59,8 @@ xcodebuild test \
 
 ```bash
 xcodebuild test-without-building \
-  -workspace clients/ai-screening-assistant/ai-screening-assistant.xcworkspace \
-  -scheme "macos-ai-screening-assistant" \
+  -workspace apps/screening-assistant/ai-screening-assistant.xcworkspace \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -parallel-testing-enabled NO
 ```
@@ -71,91 +70,37 @@ xcodebuild test-without-building \
 ```bash
 # Clean build artifacts
 xcodebuild clean \
-  -workspace clients/ai-screening-assistant/ai-screening-assistant.xcworkspace \
-  -scheme "macos-ai-screening-assistant"
+  -workspace apps/screening-assistant/ai-screening-assistant.xcworkspace \
+  -scheme "screening-assistant"
 
 # Clean derived data
-rm -rf ~/Library/Developer/Xcode/DerivedData/macos-ai-screening-assistant-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/screening-assistant-*
 ```
 
 ### Lint & Format
 
 ```bash
 # SwiftLint
-swiftlint lint --strict clients/ai-screening-assistant/macos-ai-screening-assistant/
+swiftlint lint --strict apps/screening-assistant/screening-assistant/
 
 # SwiftFormat
-swiftformat clients/ai-screening-assistant/macos-ai-screening-assistant/
+swiftformat apps/screening-assistant/screening-assistant/
 ```
 
 ### List Schemes & Destinations
 
 ```bash
 # List all schemes in macOS project
-xcodebuild -list -project clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj
+xcodebuild -list -project apps/screening-assistant/screening-assistant.xcodeproj
 
 # List available destinations
-xcodebuild -scheme "macos-ai-screening-assistant" -showdestinations
+xcodebuild -scheme "screening-assistant" -showdestinations
 ```
 
----
-
-## iOS App
-
-**Project:** `clients/ai-screening-assistant/ios-ai-screening-assistant.xcodeproj`  
-**Scheme:** `ios-ai-screening-assistant`  
-**Workspace:** `clients/ai-screening-assistant/ai-screening-assistant.xcworkspace`
-
-### Build
-
-```bash
-# From workspace (recommended)
-xcodebuild build \
-  -workspace clients/ai-screening-assistant/ai-screening-assistant.xcworkspace \
-  -scheme "ios-ai-screening-assistant" \
-  -destination "platform=iOS Simulator,name=iPhone 16" \
-  -configuration Debug
-
-# From project directly
-xcodebuild build \
-  -project clients/ai-screening-assistant/ios-ai-screening-assistant.xcodeproj \
-  -scheme "ios-ai-screening-assistant" \
-  -destination "platform=iOS Simulator,name=iPhone 16" \
-  -configuration Debug
-```
-
-### Test
-
-```bash
-# From workspace (recommended)
-xcodebuild test \
-  -workspace clients/ai-screening-assistant/ai-screening-assistant.xcworkspace \
-  -scheme "ios-ai-screening-assistant" \
-  -destination "platform=iOS Simulator,name=iPhone 16" \
-  -parallel-testing-enabled NO
-
-# From project directly
-xcodebuild test \
-  -project clients/ai-screening-assistant/ios-ai-screening-assistant.xcodeproj \
-  -scheme "ios-ai-screening-assistant" \
-  -destination "platform=iOS Simulator,name=iPhone 16" \
-  -parallel-testing-enabled NO
-```
-
-### List Simulators
-
-```bash
-# List all available iOS simulators
-xcrun simctl list devices
-
-# List only booted simulators
-xcrun simctl list devices booted
-```
 
 ---
 
 ## AI Server (Python/FastAPI)
-
 **Project:** `services/ai-server/`  
 **Package Manager:** `uv`
 
@@ -272,20 +217,6 @@ mise run lint:macOS
 mise run format:macOS
 ```
 
-### iOS App
-
-```bash
-# Build
-mise run build:iOS                                      # Debug, iPhone 16
-mise run build:iOS -- -c Release                        # Release
-mise run build:iOS -- -d "platform=iOS Simulator,name=iPhone 16 Pro"  # Custom destination
-mise run build:iOS:workspace                            # from workspace
-
-# Test
-mise run test:iOS               # from project
-mise run test:iOS:workspace     # from workspace (recommended)
-```
-
 ### AI Server
 
 ```bash
@@ -319,9 +250,7 @@ mise run swagger                # http://localhost:8000/docs
 
 ```bash
 mise run list:schemes:macOS     # list macOS schemes
-mise run list:schemes:iOS       # list iOS schemes
 mise run list:destinations:macOS  # list macOS destinations
-mise run list:destinations:iOS    # list iOS simulators
 mise run envs                   # show key environment variables
 ```
 
@@ -333,7 +262,7 @@ mise run envs                   # show key environment variables
 
 If you see: `Logging Error: Failed to initialize logging system due to time out`
 
-The fix is already applied in the scheme (`macos-ai-screening-assistant.xcscheme`):
+The fix is already applied in the scheme (`screening-assistant.xcscheme`):
 
 ```xml
 <EnvironmentVariables>
@@ -347,23 +276,12 @@ This is set in both `TestAction` and `LaunchAction`.
 
 `ScreenshotStore` must inherit from `NSObject` (not a pure Swift class) to avoid double-free crashes under XCTest. This is already implemented.
 
-### Simulator Not Found
-
-```bash
-# List available runtimes
-xcrun simctl list runtimes
-
-# Create a new simulator if needed
-xcrun simctl create "iPhone 16" "iOS 18.0"
-```
-
 ### Derived Data Issues
 
 ```bash
 # Clean all derived data for this project
-rm -rf ~/Library/Developer/Xcode/DerivedData/macos-ai-screening-assistant-*
-rm -rf ~/Library/Developer/Xcode/DerivedData/ios-ai-screening-assistant-*
-```
+rm -rf ~/Library/Developer/Xcode/DerivedData/screening-assistant-*
+\`\`\`
 
 ---
 
@@ -371,14 +289,12 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/ios-ai-screening-assistant-*
 
 ```
 ai-screening-assistant/
-├── clients/
-│   └── ai-screening-assistant/
+├── apps/
+│   └── screening-assistant/
 │       ├── ai-screening-assistant.xcworkspace
-│       ├── ios-ai-screening-assistant/
-│       ├── ios-ai-screening-assistant.xcodeproj
-│       ├── macos-ai-screening-assistant/
-│       ├── macos-ai-screening-assistant.xcodeproj
-│       └── macos-ai-screening-assistantTests/
+│       ├── screening-assistant/
+│       ├── screening-assistant.xcodeproj
+│       └── screening-assistantTests/
 ├── services/
 │   └── ai-server/
 │       ├── src/ai_server/

@@ -1,7 +1,7 @@
 ---
 description: |
   Use for macOS Xcode test issues, malloc/crash debugging, NSObject deallocation
-  fixes, and keeping the 34-test suite green.
+  fixes, and keeping the 36-test suite green.
 mode: subagent
 permission:
   edit: allow
@@ -25,8 +25,8 @@ You are the test architect for the Screening LLM Assistant macOS app.
 
 ```bash
 xcodebuild test \
-  -project apps/macos-ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \
-  -scheme "macos-ai-screening-assistant" \
+  -project apps/screening-assistant/screening-assistant.xcodeproj \
+  -scheme "screening-assistant" \
   -destination "platform=macOS" \
   -configuration Debug \
   -parallel-testing-enabled NO

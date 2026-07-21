@@ -4,7 +4,7 @@ import time
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 
 from ai_server.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError
 from ai_server.config import Settings, get_settings
@@ -20,6 +20,30 @@ from ai_server.schemas import (
     HealthResponse,
 )
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        dead = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                dead.append(connection)
+        for conn in dead:
+            self.active_connections.remove(conn)
+
+
+manager = ConnectionManager()
+
 router = APIRouter()
 
 
@@ -29,17 +53,6 @@ def _get_metrics(request: Request) -> MetricsRegistry | None:
 
 def _get_circuit_breaker(request: Request):
     return getattr(request.app.state, "circuit_breaker", None)
-
-
-@router.get(
-    "/api/health",
-    response_model=HealthResponse,
-    tags=["health"],
-    summary="Legacy health check (alias for /health/live)",
-)
-async def health() -> HealthResponse:
-    logger.debug("Health check called")
-    return HealthResponse()
 
 
 @router.get(
@@ -125,9 +138,29 @@ async def analyze(
         reg.image_bytes_total.inc(len(image))
         reg.last_analysis_timestamp.labels(model=result.model).set_to_current_time()
 
-    logger.info("Analyze request completed", extra={"props": {"model": result.model, "duration_ms": result.processing_ms, "response_length": len(result.response)}})
-    return AnalyzeResponse(
+    resp = AnalyzeResponse(
         model=result.model,
         response=result.response,
         processing_ms=result.processing_ms,
     )
+    await manager.broadcast({
+        "id": resp.id,
+        "timestamp": resp.timestamp,
+        "model": resp.model,
+        "response": resp.response,
+        "prompt": prompt,
+        "imageBase64": None,
+    })
+    logger.info("Analyze request completed", extra={"props": {"model": result.model, "duration_ms": result.processing_ms, "response_length": len(result.response)}})
+    return resp
+
+
+@router.websocket("/ws/analysis")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    await websocket.send_json({"type": "welcome", "message": "Connected to analysis broadcast"})
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
