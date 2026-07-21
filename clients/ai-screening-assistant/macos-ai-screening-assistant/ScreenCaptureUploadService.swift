@@ -1,8 +1,12 @@
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import Foundation
 
 public protocol ScreenCaptureUploading {
-    func uploadAndAnalyze(image: NSImage, prompt: String) async throws -> AnalysisUploadResponse
+    func uploadAndAnalyze(image: PlatformImage, prompt: String) async throws -> AnalysisUploadResponse
 }
 
 public struct AnalysisUploadResponse: Codable, Equatable {
@@ -49,19 +53,8 @@ public final class ScreenCaptureUploadService: ScreenCaptureUploading {
         self.session = session
     }
 
-    public func uploadAndAnalyze(image: NSImage, prompt: String = "Analyze this screen content") async throws -> AnalysisUploadResponse {
-        let jpegData: Data
-        if let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-            let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
-            guard let data = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.8]) else {
-                throw UploadError.invalidImageData
-            }
-            jpegData = data
-        } else if let tiffData = image.tiffRepresentation,
-                  let bitmap = NSBitmapImageRep(data: tiffData),
-                  let data = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.8]) {
-            jpegData = data
-        } else {
+    public func uploadAndAnalyze(image: PlatformImage, prompt: String = "Analyze this screen content") async throws -> AnalysisUploadResponse {
+        guard let jpegData = image.toJPEGData(compressionQuality: 0.8) else {
             throw UploadError.invalidImageData
         }
 

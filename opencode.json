@@ -1,30 +1,46 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "general",
-  "instructions": ["CLAUDE.md"],
+  "instructions": ["AGENTS.md", "CLAUDE.md"],
   "references": {
     "docs": {
       "path": "docs",
       "description": "Use for architecture, roadmap, and design decisions"
     },
+    "clients": {
+      "path": "clients/ai-screening-assistant/PROJECT.md",
+      "description": "Use for multiplatform macOS background agent & iOS viewer client architecture"
+    },
     "xcode-scheme": {
-      "path": "apps/macos-ai-screening-assistant/macos-ai-screening-assistant.xcodeproj/xcshareddata/xcschemes/macos-ai-screening-assistant.xcscheme",
+      "path": "clients/ai-screening-assistant/macos-ai-screening-assistant.xcodeproj/xcshareddata/xcschemes/macos-screening-assistant.xcscheme",
       "description": "Xcode test scheme configuration with -parallel-testing-enabled NO",
       "hidden": true
     }
   },
   "command": {
-    "test": {
-      "description": "Run the full macOS test suite (34 tests)",
-      "template": "Run the macOS Xcode test suite:\n\n```bash\nxcodebuild test \\\n  -project apps/macos-ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \\\n  -scheme \"macos-ai-screening-assistant\" \\\n  -destination \"platform=macOS\" \\\n  -configuration Debug \\\n  -parallel-testing-enabled NO\n```"
+    "test:macOS": {
+      "description": "Run the full macOS XCTest suite (36 tests)",
+      "template": "Run the macOS Xcode test suite:\n\n```bash\nmise run test:macOS\n```"
     },
-    "build": {
-      "description": "Build the macOS app (no tests)",
-      "template": "Build the macOS app:\n\n```bash\nxcodebuild build \\\n  -project apps/macos-ai-screening-assistant/macos-ai-screening-assistant.xcodeproj \\\n  -scheme \"macos-ai-screening-assistant\" \\\n  -destination \"platform=macOS\" \\\n  -configuration Debug\n```"
+    "test:ai-server": {
+      "description": "Run the Python AI server unit tests (113 tests, 100% coverage)",
+      "template": "Run the AI server pytest suite:\n\n```bash\nmise run test:ai-server\n```"
     },
-    "otel": {
-      "description": "Start local observability stack (OTel + Grafana + Prometheus)",
-      "template": "Start the local OpenTelemetry dev stack:\n\n```bash\ndocker compose -f development/docker-compose.yml up -d\n# Grafana: http://localhost:3000 (admin/admin)\n# OTel Collector: localhost:4318\n```"
+    "build:macOS": {
+      "description": "Build the macOS app (Debug target)",
+      "template": "Build the macOS app:\n\n```bash\nmise run build:macOS\n```"
+    },
+    "compose-up": {
+      "description": "Start local observability stack (OTel + Grafana + Prometheus + Jaeger + Loki)",
+      "template": "Start the full observability stack:\n\n```bash\nmise run compose-up\n# Grafana: http://localhost:3000 (admin/admin)\n# Jaeger UI: http://localhost:16686\n# Prometheus UI: http://localhost:9090\n```"
+    },
+    "lint:macOS": {
+      "description": "Run SwiftLint strict mode check",
+      "template": "Run SwiftLint:\n\n```bash\nmise run lint:macOS\n```"
+    },
+    "format:macOS": {
+      "description": "Format Swift code via SwiftFormat",
+      "template": "Format Swift code:\n\n```bash\nmise run format:macOS\n```"
     }
   },
   "permission": {
@@ -32,6 +48,9 @@
       "*": "allow"
     },
     "zsh": {
+      "*": "allow"
+    },
+    "command": {
       "*": "allow"
     }
   }

@@ -1,6 +1,10 @@
+#if os(macOS)
 import AppKit
-import SwiftUI
 import ScreenCaptureKit
+#else
+import UIKit
+#endif
+import SwiftUI
 
 enum CaptureError: Error {
     case noDisplay
@@ -9,11 +13,12 @@ enum CaptureError: Error {
 }
 
 protocol ScreenCaptureProviding {
-    func captureFullScreen() async throws -> NSImage
+    func captureFullScreen() async throws -> PlatformImage
 }
 
+#if os(macOS)
 final class ScreenCaptureService: ScreenCaptureProviding {
-    func captureFullScreen() async throws -> NSImage {
+    func captureFullScreen() async throws -> PlatformImage {
         let content: SCShareableContent
         do {
             content = try await SCShareableContent.current
@@ -36,6 +41,13 @@ final class ScreenCaptureService: ScreenCaptureProviding {
         return NSImage(cgImage: cgImage, size: .zero)
     }
 }
+#else
+final class ScreenCaptureService: ScreenCaptureProviding {
+    func captureFullScreen() async throws -> PlatformImage {
+        return PlatformImage()
+    }
+}
+#endif
 
 final class ScreenCaptureManager {
     private let service: ScreenCaptureProviding
@@ -97,13 +109,13 @@ final class ScreenshotStore: NSObject {
     }
 
     @discardableResult
-    func addScreenshot(_ image: NSImage, response: String? = nil, model: String? = nil) -> CapturedScreenshot {
+    func addScreenshot(_ image: PlatformImage, response: String? = nil, model: String? = nil) -> CapturedScreenshot {
         let fileURL: URL?
         if saveToDisk, let storageDirectory {
             let fileName = "screenshot_\(UUID().uuidString).tiff"
             fileURL = storageDirectory.appendingPathComponent(fileName)
-            if let tiffData = image.tiffRepresentation {
-                try? tiffData.write(to: fileURL!)
+            if let jpegData = image.toJPEGData() {
+                try? jpegData.write(to: fileURL!)
             }
         } else {
             fileURL = nil
@@ -135,7 +147,7 @@ final class ScreenshotStore: NSObject {
         saveManifest()
     }
 
-    func image(for id: UUID) -> NSImage? {
+    func image(for id: UUID) -> PlatformImage? {
         screenshots.first { $0.id == id }?.image
     }
 
@@ -154,7 +166,7 @@ final class ScreenshotStore: NSObject {
 struct CapturedScreenshot: Identifiable, Equatable {
     let id: UUID
     let date: Date
-    let image: NSImage?
+    let image: PlatformImage?
     let fileURL: URL?
     let analysisResult: String?
     let analysisModel: String?
@@ -162,7 +174,7 @@ struct CapturedScreenshot: Identifiable, Equatable {
     init(
         id: UUID,
         date: Date,
-        image: NSImage?,
+        image: PlatformImage?,
         fileURL: URL? = nil,
         analysisResult: String? = nil,
         analysisModel: String? = nil
