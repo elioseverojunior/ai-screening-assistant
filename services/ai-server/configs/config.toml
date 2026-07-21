@@ -1,0 +1,39 @@
+# Screening LLM Assistant — AI Server Configuration
+# Environment-specific overrides go in .env (secrets) or env vars.
+
+host = "0.0.0.0"
+port = 8000
+default_model = "nvidia.nemotron-nano-12b-v2"
+provider = "bedrock"
+
+ollama_base_url = "http://localhost:11434"
+ollama_model = ""
+
+huggingface_api_token = ""
+huggingface_model = ""
+
+groq_api_key = ""
+groq_model = ""
+
+gemini_api_key = ""
+gemini_model = ""
+
+cloudflare_api_token = ""
+cloudflare_account_id = ""
+cloudflare_model = ""
+
+zen_api_key = ""
+zen_model = "deepseek-v4-flash-free"
+
+bedrock_region = "us-east-1"
+bedrock_model = ""
+
+metrics_port = 9000
+health_port = 8001
+
+cb_failure_threshold = 5
+cb_recovery_timeout = 30
+
+otel_collector_endpoint = ""
+otel_log_level = "INFO"
+otel_metrics_prefix = "screening_llm"

@@ -1,0 +1,124 @@
+name: obserbability
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: screening-otel-collector
+    hostname: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8889:8889"
+      - "55679:55679"
+    depends_on:
+      jaeger:
+        condition: service_started
+    networks:
+      - ai-screening-assistant
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: screening-jaeger
+    hostname: jaeger
+    ports:
+      - "16686:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - ai-screening-assistant
+
+  loki:
+    image: grafana/loki:latest
+    container_name: screening-loki
+    hostname: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki-data:/loki
+    command:
+      - "--config.file=/etc/loki/loki-config.yaml"
+    networks:
+      - ai-screening-assistant
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: screening-cadvisor
+    hostname: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    privileged: true
+    networks:
+      - ai-screening-assistant
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: screening-prometheus
+    hostname: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      ai-server:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks:
+      - ai-screening-assistant
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: screening-grafana
+    hostname: grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/otel-overview.json
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+      loki:
+        condition: service_started
+    networks:
+      - ai-screening-assistant
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+networks:
+  ai-screening-assistant:
+    driver: bridge

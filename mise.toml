@@ -1,0 +1,221 @@
+[settings]
+experimental = true
+color = true
+
+[env]
+ARCH = "{{exec(command='uname -m')}}"
+XCODE_CLIENTS_PROJECT_DIR = "clients/ai-screening-assistant"
+PROJECT_SUFFIX = "ai-screening-assistant"
+IOS_PROJECT_NAME = "ios-$PROJECT_SUFFIX"
+IOS_PROJECT_DIR = "$XCODE_CLIENTS_PROJECT_DIR/$IOS_PROJECT_NAME"
+IOS_XCODEPROJ = "$XCODE_CLIENTS_PROJECT_DIR/$IOS_PROJECT_NAME.xcodeproj"
+MACOS_PROJECT_NAME = "macos-$PROJECT_SUFFIX"
+MACOS_PROJECT_DIR = "$XCODE_CLIENTS_PROJECT_DIR/$MACOS_PROJECT_NAME"
+MACOS_XCODEPROJ = "$XCODE_CLIENTS_PROJECT_DIR/$MACOS_PROJECT_NAME.xcodeproj"
+MACOS_XCWORKSPACE = "$XCODE_CLIENTS_PROJECT_DIR/ai-screening-assistant.xcworkspace"
+IOS_XCWORKSPACE = "$XCODE_CLIENTS_PROJECT_DIR/ai-screening-assistant.xcworkspace"
+PROJECT_NAME = "{{exec(command='basename $(pwd)')}}"
+MACOS_DEVELOPER_DERIVE_DATA_DIR="~/Library/Developer/Xcode/DerivedData/$MACOS_PROJECT_NAME-*"
+
+[tools]
+uv = 'latest'
+
+[hooks]
+enter = { task = "setup" }
+
+[tasks]
+[tasks.envs]
+description = "Display the most importan environment variables for the project"
+run = '''
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+echo "Architecture:             $ARCH"
+echo "iOS Project Name:         $IOS_PROJECT_NAME"
+echo "iOS Project Directory:    $IOS_PROJECT_DIR"
+echo "iOS Xcode Project:        $IOS_XCODEPROJ"
+echo "macOS Project Name:       $MACOS_PROJECT_NAME"
+echo "macOS Project Directory:  $MACOS_PROJECT_DIR"
+echo "macOS Xcode Project:      $MACOS_XCODEPROJ"
+echo "Project Name:             $PROJECT_NAME"
+'''
+
+[tasks.install-deps]
+description = "Install Project Dependencies"
+run = '''
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+echo "installing project '$PROJECT_NAME' dependencies for architecture '$ARCH'"
+'''
+
+[tasks.setup]
+description = "Setup the project"
+run = "echo 'setting up project'"
+depends = ["install-deps"]
+
+[tasks.compose-up]
+description = "Start the full observability stack (OTel collector, Jaeger, Prometheus, Grafana)"
+run = "docker compose -f development/docker-compose.yml up -d"
+
+[tasks."compose-rebuild"]
+description = "Start the full observability stack (OTel collector, Jaeger, Prometheus, Grafana)"
+run = "docker compose -f development/docker-compose.yml up --build -d"
+
+[tasks.compose-down]
+description = "Stop the observability stack"
+run = "docker compose -f development/docker-compose.yml down"
+
+[tasks.compose-logs]
+description = "Tail logs from all observability services"
+run = "docker compose -f development/docker-compose.yml logs -f"
+
+[tasks.compose-restart]
+description = "Restart the observability stack"
+run = "docker compose -f development/docker-compose.yml down && docker compose -f development/docker-compose.yml up -d"
+
+[tasks.compose-status]
+description = "Show status of all observability services"
+run = "docker compose -f development/docker-compose.yml ps"
+
+# XCode build tasks for macOS and iOS
+[tasks."build:macOS"]
+alias = ["build:macos", "build:osx", "osxb"]
+dir = ""
+usage = '''
+flag "-c --configuration <configuration>" default="Debug" help="Build configuration" {
+  choices "Debug" "Release"
+}
+'''
+description = "Build the macOS app with xcodebuild"
+run = "xcodebuild build -project $MACOS_XCODEPROJ -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration ${usage_configuration}"
+
+[tasks."test:macOS"]
+description = "Run unit tests"
+run = "xcodebuild test -project $MACOS_XCODEPROJ -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration Debug -parallel-testing-enabled NO"
+
+[tasks."test:macOS:workspace"]
+description = "Run unit tests from workspace"
+run = "xcodebuild test -workspace $MACOS_XCWORKSPACE -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration Debug -parallel-testing-enabled NO"
+
+[tasks."build:macOS:workspace"]
+description = "Build the macOS app with xcodebuild from workspace"
+run = "xcodebuild build -workspace $MACOS_XCWORKSPACE -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -configuration Debug"
+
+[tasks."clean:macOS"]
+description = "Clean build artifacts and derived data"
+run = "rm -rf $MACOS_PROJECT_DIR/build $MACOS_DEVELOPER_DERIVE_DATA_DIR"
+
+[tasks."lint:macOS"]
+description = "Run SwiftLint"
+run = "swiftlint lint --strict $MACOS_PROJECT_DIR/ 2>/dev/null; swiftlint lint --strict $MACOS_PROJECT_DIR/ 2>/dev/null || echo 'SwiftLint warnings found (non-blocking)'"
+
+[tasks."format:macOS"]
+description = "Run SwiftFormat"
+run = "swiftformat $MACOS_PROJECT_DIR/ 2>/dev/null || true"
+
+# iOS tasks
+[tasks."build:iOS"]
+alias = ["build:ios"]
+dir = ""
+usage = '''
+flag "-c --configuration <configuration>" default="Debug" help="Build configuration" {
+  choices "Debug" "Release"
+}
+flag "-d --destination <destination>" default="platform=iOS Simulator,name=iPhone 16" help="Build destination"
+'''
+description = "Build the iOS app with xcodebuild"
+run = "xcodebuild build -project $IOS_XCODEPROJ -scheme \"ios-ai-screening-assistant\" -destination '${usage_destination}' -configuration ${usage_configuration}"
+
+[tasks."test:iOS"]
+description = "Run iOS unit tests"
+run = "xcodebuild test -project $IOS_XCODEPROJ -scheme \"ios-ai-screening-assistant\" -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug -parallel-testing-enabled NO"
+
+[tasks."test:iOS:workspace"]
+description = "Run iOS unit tests from workspace"
+run = "xcodebuild test -workspace $IOS_XCWORKSPACE -scheme \"ios-ai-screening-assistant\" -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug -parallel-testing-enabled NO"
+
+[tasks."build:iOS:workspace"]
+description = "Build the iOS app with xcodebuild from workspace"
+run = "xcodebuild build -workspace $IOS_XCWORKSPACE -scheme \"ios-ai-screening-assistant\" -destination 'platform=iOS Simulator,name=iPhone 16' -configuration Debug"
+
+[tasks."sync:ai-server"]
+description = "Sync AI server dependencies with uv"
+run = "uv sync"
+dir = "services/ai-server"
+
+[tasks."test:ai-server"]
+description = "Run AI server unit tests (excludes e2e)"
+run = "uv run pytest tests/ -m 'not e2e' --cov=ai_server --cov-report=term-missing -x"
+dir = "services/ai-server"
+
+[tasks."test:ai-server-e2e"]
+description = "Run AI server end-to-end tests"
+run = "uv run pytest tests/e2e/ -v -x --no-cov"
+dir = "services/ai-server"
+
+[tasks."test:ai-server-all"]
+description = "Run all AI server tests (unit + e2e)"
+run = "uv run pytest -v --cov=ai_server --cov-report=term-missing -x"
+dir = "services/ai-server"
+
+# Endpoints
+[tasks.grafana]
+description = "Open Grafana in the default browser"
+run = "open http://localhost:3000"
+
+[tasks.jaeger]
+description = "Open Jaeger UI in the default browser"
+run = "open http://localhost:16686"
+
+[tasks.prometheus]
+description = "Open Prometheus in the default browser"
+run = "open http://localhost:9090"
+
+[tasks."swagger"]
+description = "Open AI Server Swagger UI in browser"
+run = "open http://localhost:8000/docs"
+
+# Utility tasks
+[tasks."list:schemes:macOS"]
+description = "List all macOS schemes"
+run = "xcodebuild -list -project $MACOS_XCODEPROJ"
+
+[tasks."list:schemes:iOS"]
+description = "List all iOS schemes"
+run = "xcodebuild -list -project $IOS_XCODEPROJ"
+
+[tasks."list:destinations:macOS"]
+description = "List macOS destinations"
+run = "xcodebuild -scheme \"macos-ai-screening-assistant\" -showdestinations"
+
+[tasks."list:destinations:iOS"]
+description = "List iOS Simulator destinations"
+run = "xcrun simctl list devices"
+
+# Archive & Export tasks
+[tasks."archive:macOS"]
+description = "Archive the macOS app for distribution"
+run = "xcodebuild archive -project $MACOS_XCODEPROJ -scheme \"macos-ai-screening-assistant\" -destination 'platform=macOS' -archivePath build/macos-ai-screening-assistant.xcarchive -configuration Release"
+
+[tasks."export:macOS"]
+description = "Export the archived macOS app (requires ExportOptions.plist)"
+run = "xcodebuild -exportArchive -archivePath build/macos-ai-screening-assistant.xcarchive -exportPath build/Export -exportOptionsPlist ExportOptions.plist"
+
+[tasks."install:macOS"]
+description = "Install the exported macOS app to /Applications"
+depends = ["archive:macOS", "export:macOS"]
+run = '''
+#!/usr/bin/env bash
+set -eou pipefail
+APP_PATH="build/Export/macos-ai-screening-assistant.app"
+if [ ! -d "$APP_PATH" ]; then
+  echo "App not found at $APP_PATH. Run 'mise run archive:macOS && mise run export:macOS' first."
+  exit 1
+fi
+echo "Installing to /Applications..."
+sudo cp -R "$APP_PATH" /Applications/
+echo "Installed successfully!"
+'''
