@@ -39,16 +39,30 @@ final class ScreenCaptureService: ScreenCaptureProviding {
 
 final class ScreenCaptureManager {
     private let service: ScreenCaptureProviding
+    private let uploadService: ScreenCaptureUploading?
     let store: ScreenshotStore
 
-    init(service: ScreenCaptureProviding = ScreenCaptureService(), store: ScreenshotStore = ScreenshotStore.shared) {
+    init(
+        service: ScreenCaptureProviding = ScreenCaptureService(),
+        uploadService: ScreenCaptureUploading? = nil,
+        store: ScreenshotStore = ScreenshotStore.shared
+    ) {
         self.service = service
+        self.uploadService = uploadService
         self.store = store
     }
 
     func captureAndStore() async throws {
         let image = try await service.captureFullScreen()
-        store.addScreenshot(image)
+        let screenshot = store.addScreenshot(image)
+        if let uploadService {
+            do {
+                let analysis = try await uploadService.uploadAndAnalyze(image: image, prompt: "Analyze this screen content")
+                store.updateAnalysis(id: screenshot.id, response: analysis.response, model: analysis.model)
+            } catch {
+                store.updateAnalysis(id: screenshot.id, response: "Upload failed: \(error.localizedDescription)", model: nil)
+            }
+        }
     }
 }
 
@@ -82,7 +96,8 @@ final class ScreenshotStore: NSObject {
         }
     }
 
-    func addScreenshot(_ image: NSImage) {
+    @discardableResult
+    func addScreenshot(_ image: NSImage, response: String? = nil, model: String? = nil) -> CapturedScreenshot {
         let fileURL: URL?
         if saveToDisk, let storageDirectory {
             let fileName = "screenshot_\(UUID().uuidString).tiff"
@@ -93,8 +108,30 @@ final class ScreenshotStore: NSObject {
         } else {
             fileURL = nil
         }
-        let screenshot = CapturedScreenshot(id: UUID(), date: Date(), image: image, fileURL: fileURL)
+        let screenshot = CapturedScreenshot(
+            id: UUID(),
+            date: Date(),
+            image: image,
+            fileURL: fileURL,
+            analysisResult: response,
+            analysisModel: model
+        )
         screenshots.append(screenshot)
+        saveManifest()
+        return screenshot
+    }
+
+    func updateAnalysis(id: UUID, response: String, model: String?) {
+        guard let index = screenshots.firstIndex(where: { $0.id == id }) else { return }
+        let old = screenshots[index]
+        screenshots[index] = CapturedScreenshot(
+            id: old.id,
+            date: old.date,
+            image: old.image,
+            fileURL: old.fileURL,
+            analysisResult: response,
+            analysisModel: model
+        )
         saveManifest()
     }
 
@@ -119,12 +156,23 @@ struct CapturedScreenshot: Identifiable, Equatable {
     let date: Date
     let image: NSImage?
     let fileURL: URL?
+    let analysisResult: String?
+    let analysisModel: String?
 
-    init(id: UUID, date: Date, image: NSImage?, fileURL: URL? = nil) {
+    init(
+        id: UUID,
+        date: Date,
+        image: NSImage?,
+        fileURL: URL? = nil,
+        analysisResult: String? = nil,
+        analysisModel: String? = nil
+    ) {
         self.id = id
         self.date = date
         self.image = image
         self.fileURL = fileURL
+        self.analysisResult = analysisResult
+        self.analysisModel = analysisModel
     }
 
     static func == (lhs: CapturedScreenshot, rhs: CapturedScreenshot) -> Bool {
